@@ -3,9 +3,9 @@
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
       <div>
         <h6 class="fw-bold mb-0 text-primary"><i class="fa-solid fa-book-journal-whills me-1"></i> Jurnal Agenda & KBM Kelas</h6>
-        <small class="text-muted">Dicatat oleh Wali Kelas, Ketua Kelas, Sekretaris, atau Bendahara</small>
+        <small class="text-muted">Dicatat oleh Wali Kelas, Ketua Kelas, Sekretaris, dan Bendahara</small>
       </div>
-      <button class="btn btn-primary btn-sm" onclick="bukaModalTambahJurnal()">
+      <button class="btn btn-primary btn-sm" id="btn-tambah-jurnal" onclick="bukaModalTambahJurnal()">
         <i class="fa-solid fa-plus me-1"></i> Tambah Jurnal Harian
       </button>
     </div>
@@ -16,27 +16,28 @@
           <tr>
             <th style="width: 45px;">No</th>
             <th>Tanggal</th>
-            <th>Nama Kegiatan / KBM</th>
-            <th>Deskripsi / Notulen</th>
-            <th>Lokasi</th>
-            <th>Penanggung Jawab</th>
+            <th class="text-center" style="width: 110px;">Jam Ke-</th>
+            <th>Mata Pelajaran / Kegiatan</th>
+            <th>Materi / Notulen Pembelajaran</th>
+            <th>Ruang / Lokasi</th>
+            <th>Guru / Penanggung Jawab</th>
             <th class="text-center" style="width: 80px;">Aksi</th>
           </tr>
         </thead>
         <tbody id="table-jurnal-body">
-          <tr><td colspan="7" class="text-center text-muted py-4"><div class="spinner-border spinner-border-sm text-primary me-2"></div>Memuat jurnal...</td></tr>
+          <tr><td colspan="8" class="text-center text-muted py-4"><div class="spinner-border spinner-border-sm text-primary me-2"></div>Memuat jurnal...</td></tr>
         </tbody>
       </table>
     </div>
   </div>
 </section>
 
-<!-- Modal Input Jurnal -->
+<!-- Modal Input Jurnal Lengkap Jam Pelajaran -->
 <div class="modal fade" id="modalInputJurnal" tabindex="-1">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header bg-primary text-white">
-        <h6 class="modal-title fw-bold">Tambah Jurnal Kelas</h6>
+        <h6 class="modal-title fw-bold"><i class="fa-solid fa-book-open me-2"></i>Tambah Jurnal KBM Kelas</h6>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body p-3">
@@ -47,23 +48,44 @@
               <input type="date" id="j-tgl" class="form-control form-control-sm" required>
             </div>
             <div class="col-6">
-              <label class="form-label small fw-semibold">Lokasi</label>
+              <label class="form-label small fw-semibold">Jam Pelajaran Ke-</label>
+              <select id="j-jam-ke" class="form-select form-select-sm" required>
+                <option value="1 - 2">Jam Ke- 1 s.d 2</option>
+                <option value="3 - 4">Jam Ke- 3 s.d 4</option>
+                <option value="5 - 6">Jam Ke- 5 s.d 6</option>
+                <option value="7 - 8">Jam Ke- 7 s.d 8</option>
+                <option value="9 - 10">Jam Ke- 9 s.d 10</option>
+                <option value="1">Jam Ke- 1</option>
+                <option value="2">Jam Ke- 2</option>
+                <option value="3">Jam Ke- 3</option>
+                <option value="4">Jam Ke- 4</option>
+                <option value="5">Jam Ke- 5</option>
+                <option value="6">Jam Ke- 6</option>
+                <option value="7">Jam Ke- 7</option>
+                <option value="8">Jam Ke- 8</option>
+                <option value="Lainnya">Lainnya / Agenda Khusus</option>
+              </select>
+            </div>
+          </div>
+          <div class="row g-2 mb-2">
+            <div class="col-7">
+              <label class="form-label small fw-semibold">Mata Pelajaran / Agenda</label>
+              <input type="text" id="j-nama" class="form-control form-control-sm" placeholder="Contoh: Informatika / Matematika" required>
+            </div>
+            <div class="col-5">
+              <label class="form-label small fw-semibold">Ruang / Lokasi</label>
               <input type="text" id="j-lokasi" class="form-control form-control-sm" value="Ruang Kelas" required>
             </div>
           </div>
           <div class="mb-2">
-            <label class="form-label small fw-semibold">Nama Kegiatan / Pelajaran</label>
-            <input type="text" id="j-nama" class="form-control form-control-sm" placeholder="Contoh: KBM Penjas Materi Bola Voli" required>
-          </div>
-          <div class="mb-2">
-            <label class="form-label small fw-semibold">Deskripsi / Hasil Notulen</label>
-            <textarea id="j-deskripsi" class="form-control form-control-sm" rows="3" placeholder="Uraian kegiatan atau tugas kelas..." required></textarea>
+            <label class="form-label small fw-semibold">Materi / Deskripsi KBM / Notulen</label>
+            <textarea id="j-deskripsi" class="form-control form-control-sm" rows="3" placeholder="Rangkuman materi pembahasan atau tugas yang diberikan guru..." required></textarea>
           </div>
           <div class="mb-3">
-            <label class="form-label small fw-semibold">Penanggung Jawab / Guru</label>
-            <input type="text" id="j-pj" class="form-control form-control-sm" placeholder="Contoh: Nama Guru / Sekretaris" required>
+            <label class="form-label small fw-semibold">Guru Pengampu / Penanggung Jawab</label>
+            <input type="text" id="j-pj" class="form-control form-control-sm" placeholder="Nama Guru Pengampu atau Pengurus Kelas" required>
           </div>
-          <button type="submit" id="btn-save-j" class="btn btn-primary btn-sm w-100">Simpan Jurnal</button>
+          <button type="submit" id="btn-save-j" class="btn btn-primary btn-sm w-100">Simpan Jurnal KBM</button>
         </form>
       </div>
     </div>
@@ -73,35 +95,51 @@
 <script>
   async function loadDataJurnal() {
     const tbody = document.getElementById('table-jurnal-body');
+    const session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
+    const role = session.role || 'SISWA';
+    const isWali = (role === 'WALI_KELAS');
+    const isBendahara = (role === 'BENDAHARA' || isWali);
+    const isPengurus = (role === 'KETUA_KELAS' || role === 'SEKRETARIS' || isBendahara);
+
+    // Siswa biasa hanya dapat membaca (read-only), sembunyikan tombol tambah
+    const btnTambah = document.getElementById('btn-tambah-jurnal');
+    if (btnTambah) btnTambah.style.display = isPengurus ? 'block' : 'none';
+
     try {
       const res = await postGAS({ action: 'getDataJurnal' });
       if (res.status === 'success') {
         tbody.innerHTML = '';
-        if (res.data.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">Belum ada jurnal yang tersimpan.</td></tr>';
+        if (!res.data || res.data.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">Belum ada jurnal KBM yang tersimpan.</td></tr>';
           return;
         }
+
         res.data.forEach((j, idx) => {
           const tgl = (j.tanggal || '').toString().slice(0, 10);
+          const jamKe = j.jam_ke || '-';
+
           tbody.innerHTML += `
             <tr>
               <td>${idx + 1}</td>
               <td><small class="text-muted">${tgl}</small></td>
+              <td class="text-center"><span class="badge bg-primary-subtle text-primary border border-primary-subtle fw-semibold">Jam ${jamKe}</span></td>
               <td class="fw-semibold text-dark">${j.nama_kegiatan || '-'}</td>
               <td><small class="text-secondary">${j.deskripsi || '-'}</small></td>
               <td><span class="badge bg-light text-dark border">${j.lokasi || 'Kelas'}</span></td>
-              <td><small>${j.penanggung_jawab || '-'}</small></td>
+              <td><small class="fw-medium">${j.penanggung_jawab || '-'}</small></td>
               <td class="text-center">
-                <button class="btn btn-sm btn-outline-danger" onclick="hapusJurnal('${j.kegiatan_id}')"><i class="fa-solid fa-trash"></i></button>
+                ${isPengurus ? `
+                  <button class="btn btn-sm btn-outline-danger py-0 px-2" onclick="hapusJurnal('${j.kegiatan_id}')" title="Hapus Jurnal"><i class="fa-solid fa-trash"></i></button>
+                ` : '<span class="text-muted small">-</span>'}
               </td>
             </tr>
           `;
         });
       } else {
-        tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger py-4">${res.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center text-danger py-4">${res.message}</td></tr>`;
       }
     } catch (e) {
-      tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">Gagal memuat jurnal.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-4">Gagal memuat jurnal.</td></tr>';
     }
   }
 
@@ -124,12 +162,14 @@
         user_id: session.user_id,
         payload: {
           tanggal: document.getElementById('j-tgl').value,
+          jam_ke: document.getElementById('j-jam-ke').value,
           lokasi: document.getElementById('j-lokasi').value.trim(),
           nama_kegiatan: document.getElementById('j-nama').value.trim(),
           deskripsi: document.getElementById('j-deskripsi').value.trim(),
           penanggung_jawab: document.getElementById('j-pj').value.trim()
         }
       });
+
       alert(res.message);
       if (res.status === 'success') {
         bootstrap.Modal.getInstance(document.getElementById('modalInputJurnal')).hide();
@@ -138,20 +178,20 @@
     } catch (err) {
       alert('Gagal menyimpan jurnal.');
     } finally {
-      btn.innerText = 'Simpan Jurnal';
+      btn.innerText = 'Simpan Jurnal KBM';
       btn.disabled = false;
     }
   }
 
   async function hapusJurnal(id) {
-    if (!confirm('Hapus jurnal ini?')) return;
+    if (!confirm('Hapus catatan jurnal KBM ini?')) return;
     const session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
     try {
       const res = await postGAS({ action: 'deleteJurnal', kegiatan_id: id, user_id: session.user_id });
       alert(res.message);
       loadDataJurnal();
     } catch (e) {
-      alert('Gagal menghapus.');
+      alert('Gagal menghapus jurnal.');
     }
   }
 
