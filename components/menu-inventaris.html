@@ -3,9 +3,9 @@
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
       <div>
         <h6 class="fw-bold mb-0 text-dark"><i class="fa-solid fa-boxes-stacked me-1 text-primary"></i> Inventaris & Sarana Ruang Kelas</h6>
-        <small class="text-muted">Pencatatan aset dan kondisi perlengkapan kelas</small>
+        <small class="text-muted">Pencatatan aset dan kondisi perlengkapan kelas oleh Wali Kelas & Pengurus Kelas</small>
       </div>
-      <button class="btn btn-primary btn-sm" onclick="bukaModalInventaris()">
+      <button class="btn btn-primary btn-sm" id="btn-tambah-inv" style="display: none;" onclick="bukaModalInventaris()">
         <i class="fa-solid fa-plus me-1"></i> Tambah Barang
       </button>
     </div>
@@ -24,7 +24,7 @@
           </tr>
         </thead>
         <tbody id="table-inventaris-body">
-          <tr><td colspan="7" class="text-center text-muted py-4">Memuat data inventaris...</td></tr>
+          <tr><td colspan="7" class="text-center text-muted py-4"><div class="spinner-border spinner-border-sm text-primary me-2"></div>Memuat data inventaris...</td></tr>
         </tbody>
       </table>
     </div>
@@ -36,14 +36,14 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header bg-dark text-white">
-        <h6 class="modal-title fw-bold">Tambah Inventaris Kelas</h6>
+        <h6 class="modal-title fw-bold"><i class="fa-solid fa-boxes-stacked me-2"></i>Tambah Inventaris Kelas</h6>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body p-3">
         <form id="form-inventaris" onsubmit="submitFormInventaris(event)">
           <div class="mb-2">
             <label class="form-label small fw-semibold">Nama Barang</label>
-            <input type="text" id="inv-nama" class="form-control form-control-sm" required placeholder="Contoh: Papan Tulis Whiteboard">
+            <input type="text" id="inv-nama" class="form-control form-control-sm" required placeholder="Contoh: Papan Tulis Whiteboard / Spidol">
           </div>
           <div class="row g-2 mb-2">
             <div class="col-6">
@@ -63,7 +63,7 @@
             <label class="form-label small fw-semibold">Lokasi Penyimpanan</label>
             <input type="text" id="inv-lokasi" class="form-control form-control-sm" value="Ruang Kelas" required>
           </div>
-          <button type="submit" id="btn-save-inv" class="btn btn-primary btn-sm w-100">Simpan Barang</button>
+          <button type="submit" id="btn-save-inv" class="btn btn-primary btn-sm w-100">Simpan Barang Inventaris</button>
         </form>
       </div>
     </div>
@@ -73,14 +73,27 @@
 <script>
   async function loadDataInventaris() {
     const tbody = document.getElementById('table-inventaris-body');
+    const session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
+    const role = session.role || 'SISWA';
+    const isWali = (role === 'WALI_KELAS');
+    const isBendahara = (role === 'BENDAHARA' || isWali);
+    const isPengurus = (role === 'KETUA_KELAS' || role === 'SEKRETARIS' || isBendahara);
+
+    // Tampilkan tombol Tambah Barang hanya untuk Pengurus dan Wali Kelas
+    const btnTambah = document.getElementById('btn-tambah-inv');
+    if (btnTambah) {
+      btnTambah.style.display = isPengurus ? 'block' : 'none';
+    }
+
     try {
       const res = await postGAS({ action: 'getDataInventaris' });
       if (res.status === 'success') {
         tbody.innerHTML = '';
-        if (res.data.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">Belum ada barang inventaris.</td></tr>';
+        if (!res.data || res.data.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">Belum ada barang inventaris yang dicatat.</td></tr>';
           return;
         }
+
         res.data.forEach((inv, idx) => {
           let badge = 'bg-success';
           if (inv.kondisi === 'Rusak Ringan') badge = 'bg-warning text-dark';
@@ -89,20 +102,26 @@
           tbody.innerHTML += `
             <tr>
               <td>${idx + 1}</td>
-              <td class="fw-semibold">${inv.nama_barang}</td>
-              <td class="text-center">${inv.jumlah}</td>
-              <td class="text-center"><span class="badge ${badge}">${inv.kondisi}</span></td>
-              <td>${inv.lokasi}</td>
+              <td class="fw-semibold text-dark">${inv.nama_barang || '-'}</td>
+              <td class="text-center fw-bold">${inv.jumlah || 1}</td>
+              <td class="text-center"><span class="badge ${badge}">${inv.kondisi || 'Baik'}</span></td>
+              <td>${inv.lokasi || 'Kelas'}</td>
               <td><small class="text-muted">${(inv.tanggal_cek || '').toString().slice(0, 10)}</small></td>
               <td class="text-center">
-                <button class="btn btn-sm btn-outline-danger" onclick="hapusInventaris('${inv.inventaris_id}')"><i class="fa-solid fa-trash"></i></button>
+                ${isPengurus ? `
+                  <button class="btn btn-sm btn-outline-danger py-0 px-2" onclick="hapusInventaris('${inv.inventaris_id}')" title="Hapus Barang">
+                    <i class="fa-solid fa-trash"></i>
+                  </button>
+                ` : '<span class="text-muted small">-</span>'}
               </td>
             </tr>
           `;
         });
+      } else {
+        tbody.innerHTML = `<tr><td colspan="7" class="text-danger text-center py-4">${res.message}</td></tr>`;
       }
     } catch (e) {
-      tbody.innerHTML = '<tr><td colspan="7" class="text-danger text-center">Gagal memuat inventaris.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" class="text-danger text-center py-4">Gagal memuat inventaris.</td></tr>';
     }
   }
 
@@ -129,6 +148,7 @@
           lokasi: document.getElementById('inv-lokasi').value.trim()
         }
       });
+
       alert(res.message);
       if (res.status === 'success') {
         bootstrap.Modal.getInstance(document.getElementById('modalInventaris')).hide();
@@ -137,20 +157,20 @@
     } catch (err) {
       alert('Gagal menyimpan inventaris.');
     } finally {
-      btn.innerText = 'Simpan Barang';
+      btn.innerText = 'Simpan Barang Inventaris';
       btn.disabled = false;
     }
   }
 
   async function hapusInventaris(id) {
-    if (!confirm('Hapus barang inventaris ini?')) return;
+    if (!confirm('Apakah Anda yakin ingin menghapus data barang inventaris ini?')) return;
     const session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
     try {
       const res = await postGAS({ action: 'deleteInventaris', inventaris_id: id, user_id: session.user_id });
       alert(res.message);
       loadDataInventaris();
     } catch (e) {
-      alert('Gagal menghapus.');
+      alert('Gagal menghapus inventaris.');
     }
   }
 
