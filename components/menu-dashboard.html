@@ -1,27 +1,28 @@
-<section id="panel-dashboard">
+<!-- ================= TAMPILAN 1: DASHBOARD WALI KELAS & PENGURUS ================= -->
+<div id="view-dashboard-wali" style="display: none;">
   <div class="row g-3 mb-4">
-    <div class="col-md-3">
+    <div class="col-md-3 col-6">
       <div class="card card-kpi">
         <span class="text-muted small fw-semibold">Total Siswa</span>
         <h2 id="kpi-total-siswa" class="fw-bold my-1 text-primary">0</h2>
         <small class="text-muted"><i class="fa-solid fa-id-card me-1"></i> Terdaftar aktif</small>
       </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-3 col-6">
       <div class="card card-kpi">
         <span class="text-muted small fw-semibold">Kehadiran Hari Ini</span>
         <h2 id="kpi-hadir-today" class="fw-bold my-1 text-success">0</h2>
         <small class="text-muted"><i class="fa-solid fa-check-circle me-1"></i> Hadir tepat waktu</small>
       </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-3 col-6">
       <div class="card card-kpi">
         <span class="text-muted small fw-semibold">Saldo Kas Kelas</span>
         <h2 id="kpi-saldo-kas" class="fw-bold my-1 text-info">Rp 0</h2>
-        <small class="text-muted"><i class="fa-solid fa-coins me-1"></i> Kas kelas aktif</small>
+        <small class="text-muted"><i class="fa-solid fa-coins me-1"></i> Kas aktif</small>
       </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-3 col-6">
       <div class="card card-kpi">
         <span class="text-muted small fw-semibold">Early Warning (EWS)</span>
         <h2 id="kpi-ews-count" class="fw-bold my-1 text-danger">0</h2>
@@ -31,15 +32,105 @@
   </div>
 
   <div class="card card-kpi p-3">
-    <h6 class="fw-bold mb-3">Tren Tingkat Kehadiran Mingguan</h6>
+    <h6 class="fw-bold mb-3"><i class="fa-solid fa-chart-column me-2 text-primary"></i>Tren Tingkat Kehadiran Mingguan Kelas</h6>
     <div style="position: relative; height: 280px; width: 100%;">
       <canvas id="weeklyAttendanceChart"></canvas>
     </div>
   </div>
-</section>
+</div>
+
+<!-- ================= TAMPILAN 2: DASHBOARD SISWA BIASA ================= -->
+<div id="view-dashboard-siswa" style="display: none;">
+  <!-- Kartu Metrik Personal Siswa -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-3 col-6">
+      <div class="card card-kpi text-center p-3">
+        <small class="text-muted d-block fw-semibold">Kehadiran Saya</small>
+        <h3 id="s-kpi-hadir" class="fw-bold text-success my-1">0 Hari</h3>
+        <small class="text-muted" id="s-kpi-hadir-detail">H: 0 | S: 0 | I: 0 | A: 0</small>
+      </div>
+    </div>
+    <div class="col-md-3 col-6">
+      <div class="card card-kpi text-center p-3">
+        <small class="text-muted d-block fw-semibold">Poin Kedisiplinan</small>
+        <h3 id="s-kpi-poin" class="fw-bold text-primary my-1">0 Poin</h3>
+        <span id="s-kpi-status-ews" class="badge bg-success-subtle text-success small">Aman / Kondusif</span>
+      </div>
+    </div>
+    <div class="col-md-3 col-6">
+      <div class="card card-kpi text-center p-3">
+        <small class="text-muted d-block fw-semibold">Saldo Kas Kelas</small>
+        <h3 id="s-kpi-kas" class="fw-bold text-info my-1">Rp 0</h3>
+        <small class="text-muted"><i class="fa-solid fa-eye me-1"></i>Transparansi Kas</small>
+      </div>
+    </div>
+    <div class="col-md-3 col-6">
+      <div class="card card-kpi text-center p-3">
+        <small class="text-muted d-block fw-semibold">Pengajuan Izin</small>
+        <h3 id="s-kpi-izin" class="fw-bold text-secondary my-1">-</h3>
+        <small class="text-muted" id="s-kpi-izin-detail">Status pengajuan terakhir</small>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <!-- Papan Pengumuman Kelas untuk Siswa -->
+    <div class="col-md-8">
+      <div class="card card-kpi p-3 h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h6 class="fw-bold text-dark mb-0"><i class="fa-solid fa-bullhorn me-2 text-primary"></i>Pengumuman & Informasi Kelas</h6>
+          <span class="badge bg-light text-muted border">Terbaru</span>
+        </div>
+        <div id="siswa-box-pengumuman">
+          <div class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm text-primary me-2"></div>Memeriksa pengumuman...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel Profil Singkat & Aksi Cepat Siswa -->
+    <div class="col-md-4">
+      <div class="card card-kpi p-3 h-100">
+        <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-bolt me-2 text-warning"></i>Aksi Cepat Siswa</h6>
+        <div class="d-grid gap-2">
+          <button class="btn btn-outline-primary btn-sm text-start py-2" onclick="navigateModule('pengajuan')">
+            <i class="fa-solid fa-envelope-open-text me-2"></i> Ajukan Surat Izin / Sakit
+          </button>
+          <button class="btn btn-outline-secondary btn-sm text-start py-2" onclick="navigateModule('jurnal')">
+            <i class="fa-solid fa-book-open me-2"></i> Lihat Agenda KBM Kelas
+          </button>
+          <button class="btn btn-outline-info btn-sm text-start py-2" onclick="navigateModule('pesan')">
+            <i class="fa-solid fa-comments me-2"></i> Konsultasi ke Wali Kelas
+          </button>
+          <button class="btn btn-outline-dark btn-sm text-start py-2" onclick="bukaModalGantiPassword()">
+            <i class="fa-solid fa-key me-2"></i> Ganti Password Akun
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script>
-  (async function() {
+  (async function initDashboard() {
+    const session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
+    const role = session.role || 'SISWA';
+    const isSiswaBiasa = (role === 'SISWA');
+
+    if (isSiswaBiasa) {
+      // Tampilkan Dashboard Siswa
+      document.getElementById('view-dashboard-siswa').style.display = 'block';
+      document.getElementById('view-dashboard-wali').style.display = 'none';
+      await renderDashboardSiswa(session);
+    } else {
+      // Tampilkan Dashboard Wali Kelas / Pengurus
+      document.getElementById('view-dashboard-wali').style.display = 'block';
+      document.getElementById('view-dashboard-siswa').style.display = 'none';
+      await renderDashboardWali();
+    }
+  })();
+
+  // Render untuk Wali Kelas / Pengurus
+  async function renderDashboardWali() {
     try {
       const res = await postGAS({ action: 'getDashboardData' });
       if (res.status === 'success') {
@@ -48,9 +139,13 @@
         document.getElementById('kpi-ews-count').innerText = res.stats.perlu_perhatian;
         document.getElementById('kpi-saldo-kas').innerText = 'Rp ' + Number(res.stats.saldo_kas || 0).toLocaleString('id-ID');
       }
-    } catch (e) {}
+    } catch (e) {
+      console.warn('Gagal memuat metrik wali:', e);
+    }
 
-    const ctx = document.getElementById('weeklyAttendanceChart').getContext('2d');
+    const canvas = document.getElementById('weeklyAttendanceChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
     if (window.dashChart) window.dashChart.destroy();
     window.dashChart = new Chart(ctx, {
       type: 'bar',
@@ -70,5 +165,69 @@
         scales: { y: { min: 0, max: 100 } }
       }
     });
-  })();
+  }
+
+  // Render untuk Siswa Biasa
+  async function renderDashboardSiswa(session) {
+    try {
+      // 1. Ambil data metrik kas global
+      const resDash = await postGAS({ action: 'getDashboardData' });
+      if (resDash.status === 'success') {
+        document.getElementById('s-kpi-kas').innerText = 'Rp ' + Number(resDash.stats.saldo_kas || 0).toLocaleString('id-ID');
+      }
+
+      // 2. Ambil data profil 360 pribadi siswa
+      if (session.student_id) {
+        const res360 = await postGAS({ action: 'getStudent360', student_id: session.student_id });
+        if (res360.status === 'success') {
+          const d = res360.data;
+          document.getElementById('s-kpi-hadir').innerText = (d.presensi.H || 0) + ' Hari';
+          document.getElementById('s-kpi-hadir-detail').innerText = `H: ${d.presensi.H} | S: ${d.presensi.S} | I: ${d.presensi.I} | A: ${d.presensi.A}`;
+          
+          document.getElementById('s-kpi-poin').innerText = (d.total_poin || 0) + ' Poin';
+          const badgeEws = document.getElementById('s-kpi-status-ews');
+          badgeEws.innerText = d.ews.status;
+          badgeEws.className = `badge bg-${d.ews.level}-subtle text-${d.ews.level} small`;
+        }
+      }
+
+      // 3. Ambil pengumuman kelas
+      const resAnn = await postGAS({ action: 'getDataPengumuman' });
+      const annBox = document.getElementById('siswa-box-pengumuman');
+      if (resAnn.status === 'success' && resAnn.data && resAnn.data.length > 0) {
+        annBox.innerHTML = '';
+        resAnn.data.slice(0, 3).forEach(ann => {
+          annBox.innerHTML += `
+            <div class="p-3 border rounded mb-2 bg-light">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="fw-bold text-primary small">${ann.judul}</span>
+                <small class="text-muted" style="font-size: 0.75rem;">${ann.tanggal_posting || ''}</small>
+              </div>
+              <p class="small text-secondary mb-1">${ann.isi}</p>
+              <small class="text-muted" style="font-size: 0.75rem;"><i class="fa-solid fa-user-pen me-1"></i>Oleh: ${ann.author || 'Wali Kelas'}</small>
+            </div>
+          `;
+        });
+      } else {
+        annBox.innerHTML = '<div class="text-center py-4 text-muted small"><i class="fa-regular fa-bell-slash me-1"></i>Belum ada pengumuman baru untuk kelas.</div>';
+      }
+
+      // 4. Periksa pengajuan izin terakhir siswa
+      const resReq = await postGAS({ action: 'getDataPengajuan' });
+      if (resReq.status === 'success' && resReq.data) {
+        const myReqs = resReq.data.filter(r => r.student_id === session.student_id || r.student_id === session.username);
+        if (myReqs.length > 0) {
+          const lastReq = myReqs[myReqs.length - 1];
+          document.getElementById('s-kpi-izin').innerText = lastReq.status || 'MENUNGGU';
+          document.getElementById('s-kpi-izin-detail').innerText = `${lastReq.jenis_pengajuan} (${lastReq.tanggal_mulai})`;
+        } else {
+          document.getElementById('s-kpi-izin').innerText = 'Nihil';
+          document.getElementById('s-kpi-izin-detail').innerText = 'Belum pernah mengajukan';
+        }
+      }
+
+    } catch (e) {
+      console.warn('Gagal memuat dashboard siswa:', e);
+    }
+  }
 </script>
