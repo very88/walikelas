@@ -1,15 +1,37 @@
 <section id="panel-akademik">
   <div class="card card-kpi">
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-      <div class="d-flex align-items-center gap-2">
-        <label class="small fw-semibold text-secondary">Filter Mapel:</label>
-        <select id="filter-mapel" class="form-select form-select-sm" style="width: 180px;" onchange="filterNilai()">
-          <option value="">Semua Mapel</option>
+      <div>
+        <h6 class="fw-bold mb-0 text-dark"><i class="fa-solid fa-graduation-cap me-1 text-primary"></i> Monitoring Nilai Akademik Kelas</h6>
+        <small class="text-muted">Pencatatan tugas, ulangan harian, PTS, dan PAS oleh Wali Kelas</small>
+      </div>
+      <div class="d-flex gap-2" id="nilai-action-buttons">
+        <button class="btn btn-outline-success btn-sm" onclick="downloadTemplateNilai()">
+          <i class="fa-solid fa-download me-1"></i> Template Excel
+        </button>
+        <button class="btn btn-outline-primary btn-sm" onclick="bukaModalImportNilai()">
+          <i class="fa-solid fa-file-import me-1"></i> Import Excel
+        </button>
+        <button class="btn btn-primary btn-sm" onclick="bukaModalInputNilai()">
+          <i class="fa-solid fa-plus me-1"></i> Input Nilai
+        </button>
+      </div>
+    </div>
+
+    <!-- Filter Mata Pelajaran & Jenis Evaluasi -->
+    <div class="row g-2 mb-3">
+      <div class="col-md-4">
+        <input type="text" id="filter-mapel" class="form-control form-control-sm" placeholder="Cari mata pelajaran..." onkeyup="filterTabelNilai()">
+      </div>
+      <div class="col-md-4">
+        <select id="filter-evaluasi" class="form-select form-select-sm" onchange="filterTabelNilai()">
+          <option value="">Semua Jenis Evaluasi</option>
+          <option value="Tugas">Tugas</option>
+          <option value="Ulangan Harian">Ulangan Harian</option>
+          <option value="PTS">PTS</option>
+          <option value="PAS">PAS</option>
         </select>
       </div>
-      <button class="btn btn-primary btn-sm" onclick="bukaModalNilai()">
-        <i class="fa-solid fa-plus me-1"></i> Input Nilai Siswa
-      </button>
     </div>
 
     <div class="table-responsive">
@@ -17,29 +39,30 @@
         <thead class="table-dark">
           <tr>
             <th style="width: 45px;">No</th>
+            <th>NIS</th>
             <th>Nama Siswa</th>
             <th>Mata Pelajaran</th>
-            <th>Jenis Evaluasi</th>
-            <th class="text-center">Nilai Angka</th>
-            <th class="text-center">Predikat</th>
+            <th>Evaluasi</th>
+            <th class="text-center" style="width: 90px;">Nilai</th>
+            <th class="text-center" style="width: 80px;">Predikat</th>
             <th>Catatan</th>
-            <th class="text-center" style="width: 80px;">Aksi</th>
+            <th class="text-center" style="width: 70px;">Aksi</th>
           </tr>
         </thead>
         <tbody id="table-nilai-body">
-          <tr><td colspan="8" class="text-center text-muted py-4">Memuat data nilai...</td></tr>
+          <tr><td colspan="9" class="text-center text-muted py-4"><div class="spinner-border spinner-border-sm text-primary me-2"></div>Memuat rekap nilai...</td></tr>
         </tbody>
       </table>
     </div>
   </div>
 </section>
 
-<!-- Modal Input Nilai -->
-<div class="modal fade" id="modalNilai" tabindex="-1">
+<!-- Modal Input Nilai Manual -->
+<div class="modal fade" id="modalInputNilai" tabindex="-1">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header bg-dark text-white">
-        <h6 class="modal-title fw-bold">Input Nilai Siswa</h6>
+        <h6 class="modal-title fw-bold"><i class="fa-solid fa-pen-nib me-2"></i>Input Nilai Siswa</h6>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body p-3">
@@ -50,7 +73,7 @@
           </div>
           <div class="mb-2">
             <label class="form-label small fw-semibold">Mata Pelajaran</label>
-            <input type="text" id="fn-mapel" class="form-control form-control-sm" required placeholder="Contoh: Matematika">
+            <input type="text" id="fn-mapel" class="form-control form-control-sm" required placeholder="Contoh: Informatika / Matematika">
           </div>
           <div class="row g-2 mb-2">
             <div class="col-6">
@@ -63,13 +86,13 @@
               </select>
             </div>
             <div class="col-6">
-              <label class="form-label small fw-semibold">Nilai (0-100)</label>
-              <input type="number" id="fn-angka" class="form-control form-control-sm" min="0" max="100" required>
+              <label class="form-label small fw-semibold">Nilai Angka (0-100)</label>
+              <input type="number" id="fn-angka" class="form-control form-control-sm" min="0" max="100" required placeholder="85">
             </div>
           </div>
           <div class="mb-3">
-            <label class="form-label small fw-semibold">Catatan Kompetensi</label>
-            <textarea id="fn-catatan" class="form-control form-control-sm" rows="2" placeholder="Catatan capaian siswa..."></textarea>
+            <label class="form-label small fw-semibold">Catatan Guru / Keterangan</label>
+            <input type="text" id="fn-catatan" class="form-control form-control-sm" placeholder="Catatan pencapaian materi...">
           </div>
           <button type="submit" id="btn-save-fn" class="btn btn-primary btn-sm w-100">Simpan Nilai</button>
         </form>
@@ -78,80 +101,119 @@
   </div>
 </div>
 
+<!-- Modal Import Nilai via Excel -->
+<div class="modal fade" id="modalImportNilai" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h6 class="modal-title fw-bold"><i class="fa-solid fa-file-import me-2"></i>Import Nilai via Excel</h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-3">
+        <p class="small text-muted mb-2">
+          Format kolom wajib: <code>nis</code>, <code>mata_pelajaran</code>, <code>jenis_ujian</code> (Tugas / Ulangan Harian / PTS / PAS), <code>nilai_angka</code>, dan <code>catatan</code>.
+        </p>
+        <div class="mb-3">
+          <label class="form-label small fw-semibold">Pilih Berkas Excel (.xlsx / .xls)</label>
+          <input type="file" id="file-import-nilai" class="form-control form-control-sm" accept=".xlsx, .xls">
+        </div>
+        <button type="button" id="btn-proses-import-nil" class="btn btn-success btn-sm w-100" onclick="prosesImportExcelNilai()">
+          Mulai Import Nilai
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
-  let cacheNilaiData = [];
+  let dataNilaiList = [];
+  let mapSiswaAkademik = {};
 
   async function loadDataNilai() {
     const tbody = document.getElementById('table-nilai-body');
+    const session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
+    const isWali = (session.role === 'WALI_KELAS');
+
+    const actionDiv = document.getElementById('nilai-action-buttons');
+    if (actionDiv) actionDiv.style.display = isWali ? 'flex' : 'none';
+
     try {
-      const resSiswa = await postGAS({ action: 'getDataSiswa' });
-      const sMap = {};
-      if (resSiswa.status === 'success') {
+      const resS = await postGAS({ action: 'getDataSiswa' });
+      if (resS.status === 'success' && resS.data) {
         const sel = document.getElementById('fn-student-id');
         sel.innerHTML = '<option value="">-- Pilih Siswa --</option>';
-        resSiswa.data.forEach(s => {
-          sMap[s.student_id] = s.nama_lengkap;
+        resS.data.forEach(s => {
+          mapSiswaAkademik[s.student_id] = s;
           sel.innerHTML += `<option value="${s.student_id}">${s.nama_lengkap} (${s.nis})</option>`;
         });
       }
 
       const res = await postGAS({ action: 'getDataNilai' });
       if (res.status === 'success') {
-        cacheNilaiData = res.data;
-        populateMapel(cacheNilaiData);
-        renderNilai(cacheNilaiData, sMap);
+        dataNilaiList = res.data || [];
+        renderTabelNilai(dataNilaiList);
       }
     } catch (e) {
-      tbody.innerHTML = '<tr><td colspan="8" class="text-danger text-center">Gagal memuat nilai.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="9" class="text-danger text-center py-4">Gagal memuat rekap nilai.</td></tr>';
     }
   }
 
-  function populateMapel(list) {
-    const select = document.getElementById('filter-mapel');
-    const unique = [...new Set(list.map(n => n.mata_pelajaran).filter(Boolean))];
-    let html = '<option value="">Semua Mapel</option>';
-    unique.forEach(m => html += `<option value="${m}">${m}</option>`);
-    select.innerHTML = html;
-  }
-
-  function filterNilai() {
-    const m = document.getElementById('filter-mapel').value;
-    const f = m ? cacheNilaiData.filter(n => n.mata_pelajaran === m) : cacheNilaiData;
-    loadDataNilai(); // Re-render
-  }
-
-  function renderNilai(list, sMap) {
+  function renderTabelNilai(list) {
     const tbody = document.getElementById('table-nilai-body');
     tbody.innerHTML = '';
+    const session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
+    const isWali = (session.role === 'WALI_KELAS');
+
     if (list.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">Belum ada data nilai.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted py-4">Belum ada rekap nilai yang dicatat.</td></tr>';
       return;
     }
+
     list.forEach((n, idx) => {
-      let b = 'bg-secondary';
-      if (n.predikat === 'A') b = 'bg-success';
-      else if (n.predikat === 'B') b = 'bg-primary';
-      else if (n.predikat === 'C') b = 'bg-warning text-dark';
-      else if (n.predikat === 'D') b = 'bg-danger';
+      const s = mapSiswaAkademik[n.student_id] || {};
+      const nama = s.nama_lengkap || n.student_id;
+      const nis = s.nis || '-';
+
+      let predBadge = 'bg-secondary';
+      if (n.predikat === 'A') predBadge = 'bg-success';
+      else if (n.predikat === 'B') predBadge = 'bg-primary';
+      else if (n.predikat === 'C') predBadge = 'bg-warning text-dark';
+      else if (n.predikat === 'D') predBadge = 'bg-danger';
 
       tbody.innerHTML += `
         <tr>
           <td>${idx + 1}</td>
-          <td class="fw-semibold">${sMap[n.student_id] || n.student_id}</td>
-          <td>${n.mata_pelajaran}</td>
-          <td><span class="badge bg-light text-dark border">${n.jenis_ujian}</span></td>
+          <td class="small text-muted">${nis}</td>
+          <td class="fw-semibold text-dark">${nama}</td>
+          <td>${n.mata_pelajaran || '-'}</td>
+          <td><span class="badge bg-light text-dark border">${n.jenis_ujian || 'Tugas'}</span></td>
           <td class="text-center fw-bold text-primary">${n.nilai_angka}</td>
-          <td class="text-center"><span class="badge ${b}">${n.predikat}</span></td>
-          <td><small class="text-muted">${n.catatan || '-'}</small></td>
-          <td class="text-center"><button class="btn btn-sm btn-outline-danger" onclick="hapusNilai('${n.nilai_id}')"><i class="fa-solid fa-trash"></i></button></td>
+          <td class="text-center"><span class="badge ${predBadge}">${n.predikat}</span></td>
+          <td><small class="text-secondary">${n.catatan || '-'}</small></td>
+          <td class="text-center">
+            ${isWali ? `
+              <button class="btn btn-sm btn-outline-danger py-0 px-2" onclick="hapusNilai('${n.nilai_id}')" title="Hapus"><i class="fa-solid fa-trash"></i></button>
+            ` : '-'}
+          </td>
         </tr>
       `;
     });
   }
 
-  function bukaModalNilai() {
+  function filterTabelNilai() {
+    const qMapel = document.getElementById('filter-mapel').value.toLowerCase();
+    const qEval = document.getElementById('filter-evaluasi').value;
+    const filtered = dataNilaiList.filter(n => {
+      const matchMapel = (n.mata_pelajaran || '').toLowerCase().includes(qMapel);
+      const matchEval = qEval ? (n.jenis_ujian === qEval) : true;
+      return matchMapel && matchEval;
+    });
+    renderTabelNilai(filtered);
+  }
+
+  function bukaModalInputNilai() {
     document.getElementById('form-nilai').reset();
-    new bootstrap.Modal(document.getElementById('modalNilai')).show();
+    new bootstrap.Modal(document.getElementById('modalInputNilai')).show();
   }
 
   async function submitFormNilai(e) {
@@ -173,9 +235,10 @@
           catatan: document.getElementById('fn-catatan').value.trim()
         }
       });
+
       alert(res.message);
       if (res.status === 'success') {
-        bootstrap.Modal.getInstance(document.getElementById('modalNilai')).hide();
+        bootstrap.Modal.getInstance(document.getElementById('modalInputNilai')).hide();
         loadDataNilai();
       }
     } catch (err) {
@@ -187,15 +250,101 @@
   }
 
   async function hapusNilai(id) {
-    if (!confirm('Hapus nilai ini?')) return;
+    if (!confirm('Hapus catatan nilai ini?')) return;
     const session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
     try {
       const res = await postGAS({ action: 'deleteNilai', nilai_id: id, user_id: session.user_id });
       alert(res.message);
       loadDataNilai();
     } catch (e) {
-      alert('Gagal menghapus.');
+      alert('Gagal menghapus nilai.');
     }
+  }
+
+  // DOWNLOAD TEMPLATE EXCEL NILAI
+  function downloadTemplateNilai() {
+    if (typeof XLSX === 'undefined') {
+      alert('Library SheetJS belum siap.');
+      return;
+    }
+
+    const siswaArray = Object.values(mapSiswaAkademik);
+    const templateData = siswaArray.length > 0
+      ? siswaArray.map(s => ({
+          nis: s.nis || "",
+          nama_lengkap: s.nama_lengkap || "",
+          mata_pelajaran: "Informatika",
+          jenis_ujian: "Ulangan Harian",
+          nilai_angka: 85,
+          catatan: "Tuntas KKM"
+        }))
+      : [
+          { nis: "3567", nama_lengkap: "Ahmad Rizky", mata_pelajaran: "Informatika", jenis_ujian: "Ulangan Harian", nilai_angka: 85, catatan: "Tuntas KKM" }
+        ];
+
+    const worksheet = XLSX.utils.json_to_sheet(templateData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "NILAI");
+    XLSX.writeFile(workbook, "Template_Import_Nilai_SIMKEL.xlsx");
+  }
+
+  // IMPORT EXCEL NILAI
+  function bukaModalImportNilai() {
+    document.getElementById('file-import-nilai').value = '';
+    new bootstrap.Modal(document.getElementById('modalImportNilai')).show();
+  }
+
+  function prosesImportExcelNilai() {
+    const fileInput = document.getElementById('file-import-nilai');
+    if (!fileInput.files || fileInput.files.length === 0) {
+      alert('Pilih berkas Excel nilai terlebih dahulu.');
+      return;
+    }
+
+    const file = fileInput.files[0];
+    const reader = new FileReader();
+    const btn = document.getElementById('btn-proses-import-nil');
+
+    btn.innerText = 'Membaca Berkas...';
+    btn.disabled = true;
+
+    reader.onload = async function(e) {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+
+        if (rows.length === 0) {
+          alert('Berkas Excel kosong.');
+          btn.innerText = 'Mulai Import Nilai';
+          btn.disabled = false;
+          return;
+        }
+
+        btn.innerText = `Mengimpor ${rows.length} Nilai...`;
+        const session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
+
+        const res = await postGAS({
+          action: 'importNilaiBatch',
+          user_id: session.user_id,
+          rows: rows
+        });
+
+        alert(res.message);
+        if (res.status === 'success') {
+          bootstrap.Modal.getInstance(document.getElementById('modalImportNilai')).hide();
+          loadDataNilai();
+        }
+      } catch (err) {
+        alert('Gagal mengimpor nilai: ' + err.toString());
+      } finally {
+        btn.innerText = 'Mulai Import Nilai';
+        btn.disabled = false;
+      }
+    };
+
+    reader.readAsArrayBuffer(file);
   }
 
   loadDataNilai();
