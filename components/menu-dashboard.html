@@ -66,16 +66,22 @@
     </div>
     <div class="col-md-3 col-6">
       <div class="card card-kpi text-center p-3">
-        <small class="text-muted d-block fw-semibold">Pengajuan Izin</small>
-        <h3 id="s-kpi-izin" class="fw-bold text-secondary my-1">-</h3>
-        <small class="text-muted" id="s-kpi-izin-detail">Status pengajuan terakhir</small>
+        <small class="text-muted d-block fw-semibold">Jadwal Piket Saya</small>
+        <h3 id="s-kpi-hari-piket" class="fw-bold text-warning my-1">-</h3>
+        <small class="text-muted" id="s-kpi-status-piket-hari-ini">Memeriksa jadwal...</small>
       </div>
     </div>
   </div>
 
+  <!-- Banner Pemberitahuan Khusus Piket Hari Ini -->
+  <div id="alert-piket-hari-ini" class="alert alert-warning d-none mb-3 py-2 px-3 small" role="alert">
+    <i class="fa-solid fa-broom me-2 fs-6"></i>
+    <strong>Perhatian:</strong> Hari ini adalah jadwal piket kebersihan kelas Anda! Pastikan kelas sudah rapi sebelum dan sesudah KBM.
+  </div>
+
   <div class="row g-3">
     <!-- Papan Pengumuman Kelas untuk Siswa -->
-    <div class="col-md-8">
+    <div class="col-md-7">
       <div class="card card-kpi p-3 h-100">
         <div class="d-flex justify-content-between align-items-center mb-3">
           <h6 class="fw-bold text-dark mb-0"><i class="fa-solid fa-bullhorn me-2 text-primary"></i>Pengumuman & Informasi Kelas</h6>
@@ -87,22 +93,26 @@
       </div>
     </div>
 
-    <!-- Panel Profil Singkat & Aksi Cepat Siswa -->
-    <div class="col-md-4">
-      <div class="card card-kpi p-3 h-100">
-        <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-bolt me-2 text-warning"></i>Aksi Cepat Siswa</h6>
+    <!-- Panel Petugas Piket Hari Ini & Aksi Cepat -->
+    <div class="col-md-5">
+      <div class="card card-kpi p-3 mb-3">
+        <h6 class="fw-bold text-dark mb-2"><i class="fa-solid fa-people-carry-box me-2 text-primary"></i>Petugas Piket Hari Ini (<span id="label-hari-ini">-</span>)</h6>
+        <div id="box-petugas-piket-today">
+          <small class="text-muted">Memuat petugas piket...</small>
+        </div>
+      </div>
+
+      <div class="card card-kpi p-3">
+        <h6 class="fw-bold text-dark mb-2"><i class="fa-solid fa-bolt me-2 text-warning"></i>Aksi Cepat Siswa</h6>
         <div class="d-grid gap-2">
           <button class="btn btn-outline-primary btn-sm text-start py-2" onclick="navigateModule('pengajuan')">
-            <i class="fa-solid fa-envelope-open-text me-2"></i> Ajukan Surat Izin / Sakit
+            <i class="fa-solid fa-envelope-open-text me-2"></i> Ajukan Izin / Dispensasi Lomba
           </button>
-          <button class="btn btn-outline-secondary btn-sm text-start py-2" onclick="navigateModule('jurnal')">
-            <i class="fa-solid fa-book-open me-2"></i> Lihat Agenda KBM Kelas
+          <button class="btn btn-outline-secondary btn-sm text-start py-2" onclick="navigateModule('piket')">
+            <i class="fa-solid fa-broom me-2"></i> Lihat Jadwal Piket Lengkap
           </button>
           <button class="btn btn-outline-info btn-sm text-start py-2" onclick="navigateModule('pesan')">
             <i class="fa-solid fa-comments me-2"></i> Konsultasi ke Wali Kelas
-          </button>
-          <button class="btn btn-outline-dark btn-sm text-start py-2" onclick="bukaModalGantiPassword()">
-            <i class="fa-solid fa-key me-2"></i> Ganti Password Akun
           </button>
         </div>
       </div>
@@ -117,19 +127,16 @@
     const isSiswaBiasa = (role === 'SISWA');
 
     if (isSiswaBiasa) {
-      // Tampilkan Dashboard Siswa
       document.getElementById('view-dashboard-siswa').style.display = 'block';
       document.getElementById('view-dashboard-wali').style.display = 'none';
       await renderDashboardSiswa(session);
     } else {
-      // Tampilkan Dashboard Wali Kelas / Pengurus
       document.getElementById('view-dashboard-wali').style.display = 'block';
       document.getElementById('view-dashboard-siswa').style.display = 'none';
       await renderDashboardWali();
     }
   })();
 
-  // Render untuk Wali Kelas / Pengurus
   async function renderDashboardWali() {
     try {
       const res = await postGAS({ action: 'getDashboardData' });
@@ -139,9 +146,7 @@
         document.getElementById('kpi-ews-count').innerText = res.stats.perlu_perhatian;
         document.getElementById('kpi-saldo-kas').innerText = 'Rp ' + Number(res.stats.saldo_kas || 0).toLocaleString('id-ID');
       }
-    } catch (e) {
-      console.warn('Gagal memuat metrik wali:', e);
-    }
+    } catch (e) {}
 
     const canvas = document.getElementById('weeklyAttendanceChart');
     if (!canvas) return;
@@ -151,39 +156,27 @@
       type: 'bar',
       data: {
         labels: ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat'],
-        datasets: [{
-          label: 'Kehadiran (%)',
-          data: [96, 94, 98, 92, 95],
-          backgroundColor: '#2563EB',
-          borderRadius: 6
-        }]
+        datasets: [{ label: 'Kehadiran (%)', data: [96, 94, 98, 92, 95], backgroundColor: '#2563EB', borderRadius: 6 }]
       },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: { y: { min: 0, max: 100 } }
-      }
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { min: 0, max: 100 } } }
     });
   }
 
-  // Render untuk Siswa Biasa
   async function renderDashboardSiswa(session) {
     try {
-      // 1. Ambil data metrik kas global
+      // 1. Kas Transparansi
       const resDash = await postGAS({ action: 'getDashboardData' });
       if (resDash.status === 'success') {
         document.getElementById('s-kpi-kas').innerText = 'Rp ' + Number(resDash.stats.saldo_kas || 0).toLocaleString('id-ID');
       }
 
-      // 2. Ambil data profil 360 pribadi siswa
+      // 2. Profil 360 Mandiri
       if (session.student_id) {
         const res360 = await postGAS({ action: 'getStudent360', student_id: session.student_id });
         if (res360.status === 'success') {
           const d = res360.data;
           document.getElementById('s-kpi-hadir').innerText = (d.presensi.H || 0) + ' Hari';
           document.getElementById('s-kpi-hadir-detail').innerText = `H: ${d.presensi.H} | S: ${d.presensi.S} | I: ${d.presensi.I} | A: ${d.presensi.A}`;
-          
           document.getElementById('s-kpi-poin').innerText = (d.total_poin || 0) + ' Poin';
           const badgeEws = document.getElementById('s-kpi-status-ews');
           badgeEws.innerText = d.ews.status;
@@ -191,7 +184,55 @@
         }
       }
 
-      // 3. Ambil pengumuman kelas
+      // 3. Nama Hari Bahasa Indonesia
+      const hariArr = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+      const hariIni = hariArr[new Date().getDay()];
+      document.getElementById('label-hari-ini').innerText = hariIni;
+
+      // 4. Jadwal Piket
+      const resPiket = await postGAS({ action: 'getJadwalPiket' });
+      const resSiswa = await postGAS({ action: 'getDataSiswa' });
+      const sMap = {};
+      if (resSiswa.status === 'success' && resSiswa.data) {
+        resSiswa.data.forEach(s => sMap[s.student_id] = s.nama_lengkap);
+      }
+
+      if (resPiket.status === 'success' && resPiket.data) {
+        // Cari hari piket siswa ini
+        const myPiket = resPiket.data.filter(p => p.student_id === session.student_id);
+        if (myPiket.length > 0) {
+          const hariList = myPiket.map(x => x.hari).join(', ');
+          document.getElementById('s-kpi-hari-piket').innerText = hariList;
+
+          const isPiketToday = myPiket.some(x => (x.hari || '').toLowerCase() === hariIni.toLowerCase());
+          if (isPiketToday) {
+            document.getElementById('s-kpi-status-piket-hari-ini').innerText = 'Petugas Hari Ini!';
+            document.getElementById('s-kpi-status-piket-hari-ini').className = 'text-danger fw-bold';
+            document.getElementById('alert-piket-hari-ini').classList.remove('d-none');
+          } else {
+            document.getElementById('s-kpi-status-piket-hari-ini').innerText = 'Bukan giliran hari ini';
+          }
+        } else {
+          document.getElementById('s-kpi-hari-piket').innerText = 'Nihil';
+          document.getElementById('s-kpi-status-piket-hari-ini').innerText = 'Belum dijadwalkan';
+        }
+
+        // Daftar teman sekelompok piket hari ini
+        const piketToday = resPiket.data.filter(p => (p.hari || '').toLowerCase() === hariIni.toLowerCase());
+        const boxPetugas = document.getElementById('box-petugas-piket-today');
+        if (piketToday.length > 0) {
+          boxPetugas.innerHTML = '<ul class="list-unstyled mb-0 small">';
+          piketToday.forEach(pt => {
+            const nama = sMap[pt.student_id] || pt.student_id;
+            boxPetugas.innerHTML += `<li class="py-1 border-bottom"><i class="fa-solid fa-check text-success me-2"></i>${nama}</li>`;
+          });
+          boxPetugas.innerHTML += '</ul>';
+        } else {
+          boxPetugas.innerHTML = `<small class="text-muted">Tidak ada jadwal piket untuk hari ${hariIni}.</small>`;
+        }
+      }
+
+      // 5. Pengumuman
       const resAnn = await postGAS({ action: 'getDataPengumuman' });
       const annBox = document.getElementById('siswa-box-pengumuman');
       if (resAnn.status === 'success' && resAnn.data && resAnn.data.length > 0) {
@@ -203,27 +244,13 @@
                 <span class="fw-bold text-primary small">${ann.judul}</span>
                 <small class="text-muted" style="font-size: 0.75rem;">${ann.tanggal_posting || ''}</small>
               </div>
-              <p class="small text-secondary mb-1">${ann.isi}</p>
-              <small class="text-muted" style="font-size: 0.75rem;"><i class="fa-solid fa-user-pen me-1"></i>Oleh: ${ann.author || 'Wali Kelas'}</small>
+              <p class="small text-secondary mb-1" style="white-space: pre-line;">${ann.isi}</p>
+              <small class="text-muted" style="font-size: 0.75rem;"><i class="fa-solid fa-user-pen me-1"></i>Oleh: ${ann.author || 'Pengurus Kelas'}</small>
             </div>
           `;
         });
       } else {
-        annBox.innerHTML = '<div class="text-center py-4 text-muted small"><i class="fa-regular fa-bell-slash me-1"></i>Belum ada pengumuman baru untuk kelas.</div>';
-      }
-
-      // 4. Periksa pengajuan izin terakhir siswa
-      const resReq = await postGAS({ action: 'getDataPengajuan' });
-      if (resReq.status === 'success' && resReq.data) {
-        const myReqs = resReq.data.filter(r => r.student_id === session.student_id || r.student_id === session.username);
-        if (myReqs.length > 0) {
-          const lastReq = myReqs[myReqs.length - 1];
-          document.getElementById('s-kpi-izin').innerText = lastReq.status || 'MENUNGGU';
-          document.getElementById('s-kpi-izin-detail').innerText = `${lastReq.jenis_pengajuan} (${lastReq.tanggal_mulai})`;
-        } else {
-          document.getElementById('s-kpi-izin').innerText = 'Nihil';
-          document.getElementById('s-kpi-izin-detail').innerText = 'Belum pernah mengajukan';
-        }
+        annBox.innerHTML = '<div class="text-center py-4 text-muted small"><i class="fa-regular fa-bell-slash me-1"></i>Belum ada pengumuman kelas.</div>';
       }
 
     } catch (e) {
