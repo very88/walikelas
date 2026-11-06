@@ -26,7 +26,7 @@
             <th>L/P</th>
             <th>Jabatan / Role</th>
             <th>No HP / WA</th>
-            <th class="text-center" style="width: 180px;">Aksi</th>
+            <th class="text-center" style="width: 210px;">Aksi</th>
           </tr>
         </thead>
         <tbody id="table-siswa-body">
@@ -37,7 +37,25 @@
   </div>
 </section>
 
-<!-- Modal Tambah / Edit Siswa -->
+<!-- ================= MODAL STUDENT 360° (PROFIL LENGKAP SISWA) ================= -->
+<div class="modal fade" id="modalStudent360" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h6 class="modal-title fw-bold"><i class="fa-solid fa-id-card-clip me-2"></i>Student 360° - Profil Komprehensif Siswa</h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-3" id="student-360-content">
+        <div class="text-center py-5 text-muted"><div class="spinner-border text-primary me-2"></div>Memuat profil siswa...</div>
+      </div>
+      <div class="modal-footer py-2 bg-light">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Tutup</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= MODAL TAMBAH / EDIT SISWA ================= -->
 <div class="modal fade" id="modalTambahSiswa" tabindex="-1">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
@@ -49,7 +67,7 @@
         <form id="form-siswa" onsubmit="submitFormSiswa(event)">
           <input type="hidden" id="fs-student-id">
           
-          <!-- Bagian 1: Data Identitas Siswa -->
+          <!-- Identitas Siswa -->
           <h6 class="fw-bold text-primary mb-2 border-bottom pb-1 small">Identitas Siswa</h6>
           <div class="row g-2 mb-2">
             <div class="col-md-4">
@@ -70,7 +88,7 @@
           </div>
           <div class="mb-2">
             <label class="form-label small fw-semibold">Nama Lengkap Siswa</label>
-            <input type="text" id="fs-nama" class="form-control form-control-sm" required placeholder="Nama lengkap sesuai rapor / ijazah">
+            <input type="text" id="fs-nama" class="form-control form-control-sm" required placeholder="Nama lengkap sesuai ijazah/rapor">
           </div>
           <div class="row g-2 mb-2">
             <div class="col-md-6">
@@ -116,7 +134,7 @@
             <textarea id="fs-alamat" class="form-control form-control-sm" rows="2" placeholder="Alamat domisili tempat tinggal siswa..."></textarea>
           </div>
 
-          <!-- Bagian 2: Data Orang Tua / Wali -->
+          <!-- Data Orang Tua / Wali -->
           <h6 class="fw-bold text-primary mb-2 border-bottom pb-1 small">Data Orang Tua / Wali</h6>
           <div class="row g-2 mb-2">
             <div class="col-md-6">
@@ -172,7 +190,7 @@
       </div>
       <div class="modal-body p-3">
         <p class="small text-muted mb-2">
-          Gunakan file template Excel terbaru untuk memastikan seluruh kolom keluarga dan orang tua terisi dengan benar.
+          Gunakan template Excel resmi untuk memastikan data identitas dan keluarga terimpor secara presisi.
         </p>
         <div class="mb-3">
           <label class="form-label small fw-semibold">Pilih Berkas Excel (.xlsx / .xls)</label>
@@ -268,7 +286,10 @@
           '<td><span class="badge ' + (s.jenis_kelamin === 'L' ? 'bg-primary' : 'bg-danger') + '">' + (s.jenis_kelamin || '-') + '</span></td>' +
           '<td><span class="badge ' + rBadge + '">' + rLabel + '</span></td>' +
           '<td>' + (s.no_hp || '-') + '</td>' +
-          '<td class="text-center">';
+          '<td class="text-center">' +
+            '<button class="btn btn-sm btn-outline-info py-0 px-2 me-1" onclick="bukaStudent360(\'' + s.student_id + '\')" title="Lihat Profil Lengkap Student 360°">' +
+              '<i class="fa-solid fa-address-card"></i>' +
+            '</button>';
 
       if (isWali) {
         htmlRow += '' +
@@ -284,13 +305,93 @@
           '<button class="btn btn-sm btn-outline-danger py-0 px-2" onclick="hapusSiswa(\'' + s.student_id + '\', \'' + s.nama_lengkap + '\')" title="Hapus">' +
             '<i class="fa-solid fa-trash"></i>' +
           '</button>';
-      } else {
-        htmlRow += '<span class="text-muted small">View Only</span>';
       }
 
       htmlRow += '</td></tr>';
       tbody.innerHTML += htmlRow;
     });
+  }
+
+  // ================= BUKA STUDENT 360° DENGAN TAMPILAN KELUARGA LENGKAP =================
+  async function bukaStudent360(studentId) {
+    var modalEl = document.getElementById('modalStudent360');
+    var contentEl = document.getElementById('student-360-content');
+    contentEl.innerHTML = '<div class="text-center py-5 text-muted"><div class="spinner-border text-primary me-2"></div>Memuat profil siswa...</div>';
+    
+    var modalInst = new bootstrap.Modal(modalEl);
+    modalInst.show();
+
+    try {
+      var res = await postGAS({ action: 'getStudent360', student_id: studentId });
+      if (res.status === 'success') {
+        var d = res.data;
+        var bio = d.biodata || {};
+        var ortu = d.orang_tua || {};
+        var pres = d.presensi || { H: 0, S: 0, I: 0, A: 0 };
+        var ews = d.ews || { status: 'Aman', level: 'success' };
+        var totalHariPres = pres.H + pres.S + pres.I + pres.A;
+        var persenHadir = totalHariPres > 0 ? Math.round((pres.H / totalHariPres) * 100) : 0;
+
+        contentEl.innerHTML = '' +
+          '<div class="card p-3 mb-3 border-0 bg-light rounded-3">' +
+            '<div class="d-flex flex-wrap align-items-center gap-3">' +
+              '<div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; font-size: 1.5rem;">' +
+                '<i class="fa-solid fa-user-graduate"></i>' +
+              '</div>' +
+              '<div>' +
+                '<h5 class="fw-bold text-dark mb-0">' + bio.nama_lengkap + '</h5>' +
+                '<div class="small text-muted">NIS: <strong>' + (bio.nis || '-') + '</strong> | NISN: <strong>' + (bio.nisn || '-') + '</strong></div>' +
+                '<div class="small text-muted"><i class="fa-solid fa-location-dot me-1 text-danger"></i>' + (bio.alamat || '-') + '</div>' +
+              '</div>' +
+              '<div class="ms-auto text-end">' +
+                '<span class="badge bg-' + ews.level + ' fs-6 px-3 py-2">' + ews.status + '</span>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+
+          '<div class="row g-2 mb-3 text-center">' +
+            '<div class="col-3"><div class="p-2 border rounded bg-white"><small class="text-muted d-block">Kehadiran</small><strong class="text-success fs-5">' + persenHadir + '%</strong><small class="d-block text-muted">(' + pres.H + ' Hadir)</small></div></div>' +
+            '<div class="col-3"><div class="p-2 border rounded bg-white"><small class="text-muted d-block">Sakit / Izin</small><strong class="text-warning fs-5">' + (pres.S + pres.I) + '</strong><small class="d-block text-muted">(S:' + pres.S + ' | I:' + pres.I + ')</small></div></div>' +
+            '<div class="col-3"><div class="p-2 border rounded bg-white"><small class="text-muted d-block">Alfa (Tanpa Ket.)</small><strong class="text-danger fs-5">' + pres.A + '</strong><small class="d-block text-muted">Hari</small></div></div>' +
+            '<div class="col-3"><div class="p-2 border rounded bg-white"><small class="text-muted d-block">Poin Disiplin</small><strong class="text-primary fs-5">' + d.total_poin + '</strong><small class="d-block text-muted">Poin EWS</small></div></div>' +
+          '</div>' +
+
+          '<div class="row g-3">' +
+            '<div class="col-md-6">' +
+              '<div class="card p-3 h-100 border">' +
+                '<h6 class="fw-bold text-primary mb-2 border-bottom pb-1"><i class="fa-solid fa-user me-2"></i>Biodata & Posisi Keluarga</h6>' +
+                '<table class="table table-sm table-borderless small mb-0">' +
+                  '<tr><td class="text-muted" style="width: 140px;">Jenis Kelamin</td><td>: ' + (bio.jenis_kelamin === 'L' ? 'Laki-laki' : 'Perempuan') + '</td></tr>' +
+                  '<tr><td class="text-muted">Tempat, Tgl Lahir</td><td>: ' + (bio.tempat_lahir || '-') + ', ' + ((bio.tanggal_lahir || '').toString().slice(0, 10) || '-') + '</td></tr>' +
+                  '<tr><td class="text-muted">Anak Ke-</td><td>: <strong>' + bio.anak_ke + '</strong> dari <strong>' + bio.dari_saudara + '</strong> bersaudara</td></tr>' +
+                  '<tr><td class="text-muted">Status Keluarga</td><td>: <span class="badge bg-light text-dark border">' + bio.status_dalam_keluarga + '</span></td></tr>' +
+                  '<tr><td class="text-muted">No. Handphone</td><td>: ' + (bio.no_hp || '-') + '</td></tr>' +
+                  '<tr><td class="text-muted">Email</td><td>: ' + (bio.email || '-') + '</td></tr>' +
+                '</table>' +
+              '</div>' +
+            '</div>' +
+
+            '<div class="col-md-6">' +
+              '<div class="card p-3 h-100 border">' +
+                '<h6 class="fw-bold text-primary mb-2 border-bottom pb-1"><i class="fa-solid fa-users me-2"></i>Data Orang Tua / Wali</h6>' +
+                '<table class="table table-sm table-borderless small mb-0">' +
+                  '<tr><td class="text-muted" style="width: 130px;">Nama Ayah</td><td>: ' + ortu.nama_ayah + '</td></tr>' +
+                  '<tr><td class="text-muted">Pekerjaan Ayah</td><td>: ' + ortu.pekerjaan_ayah + '</td></tr>' +
+                  '<tr><td class="text-muted">Nama Ibu</td><td>: ' + ortu.nama_ibu + '</td></tr>' +
+                  '<tr><td class="text-muted">Pekerjaan Ibu</td><td>: ' + ortu.pekerjaan_ibu + '</td></tr>' +
+                  '<tr><td class="text-muted">No. HP Orang Tua</td><td>: ' + ortu.no_hp_ortu + '</td></tr>' +
+                  '<tr><td class="text-muted">Alamat Orang Tua</td><td>: ' + ortu.alamat_ortu + '</td></tr>' +
+                '</table>' +
+              '</div>' +
+            '</div>' +
+          '</div>';
+
+      } else {
+        contentEl.innerHTML = '<div class="alert alert-danger py-2 small">' + res.message + '</div>';
+      }
+    } catch (err) {
+      contentEl.innerHTML = '<div class="alert alert-danger py-2 small">Gagal memuat rincian Student 360°.</div>';
+    }
   }
 
   function filterSiswa() {
@@ -397,7 +498,6 @@
     }
   }
 
-  // DOWNLOAD TEMPLATE EXCEL LENGKAP
   function downloadTemplateSiswa() {
     if (typeof XLSX === 'undefined') {
       alert('Library SheetJS belum siap. Silakan muat ulang halaman.');
