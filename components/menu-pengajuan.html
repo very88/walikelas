@@ -2,11 +2,11 @@
   <div class="card card-kpi">
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
       <div>
-        <h6 class="fw-bold mb-0 text-dark"><i class="fa-solid fa-envelope-open-text me-1 text-primary"></i> Pengajuan Izin & Surat Sakit</h6>
-        <small class="text-muted">Pengajuan dari siswa dan persetujuan Wali Kelas</small>
+        <h6 class="fw-bold mb-0 text-dark"><i class="fa-solid fa-envelope-open-text me-1 text-primary"></i> Pengajuan Izin, Sakit & Dispensasi Kegiatan</h6>
+        <small class="text-muted">Pengajuan dari siswa untuk izin pribadi, surat sakit, maupun dispensasi lomba/olahraga</small>
       </div>
       <button class="btn btn-primary btn-sm" onclick="bukaModalPengajuan()">
-        <i class="fa-solid fa-paper-plane me-1"></i> Ajukan Izin / Sakit
+        <i class="fa-solid fa-paper-plane me-1"></i> Ajukan Izin / Dispensasi
       </button>
     </div>
 
@@ -16,36 +16,41 @@
           <tr>
             <th style="width: 45px;">No</th>
             <th>Nama Siswa</th>
-            <th>Jenis</th>
-            <th>Alasan / Keterangan</th>
+            <th class="text-center" style="width: 140px;">Jenis Pengajuan</th>
+            <th>Alasan / Keterangan Kegiatan</th>
             <th>Rentang Tanggal</th>
-            <th class="text-center">Status</th>
+            <th class="text-center" style="width: 120px;">Status</th>
             <th class="text-center" style="width: 120px;">Aksi</th>
           </tr>
         </thead>
         <tbody id="table-pengajuan-body">
-          <tr><td colspan="7" class="text-center text-muted py-4">Memuat data pengajuan...</td></tr>
+          <tr><td colspan="7" class="text-center text-muted py-4"><div class="spinner-border spinner-border-sm text-primary me-2"></div>Memuat data pengajuan...</td></tr>
         </tbody>
       </table>
     </div>
   </div>
 </section>
 
-<!-- Modal Ajukan Izin -->
+<!-- Modal Ajukan Izin / Sakit / Dispensasi -->
 <div class="modal fade" id="modalPengajuan" tabindex="-1">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header bg-primary text-white">
-        <h6 class="modal-title fw-bold">Ajukan Izin / Sakit</h6>
+        <h6 class="modal-title fw-bold"><i class="fa-solid fa-paper-plane me-2"></i>Form Pengajuan Izin / Dispensasi</h6>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body p-3">
         <form id="form-pengajuan" onsubmit="submitFormPengajuan(event)">
           <div class="mb-2">
+            <label class="form-label small fw-semibold">Pilih Siswa</label>
+            <select id="req-student-select" class="form-select form-select-sm" required></select>
+          </div>
+          <div class="mb-2">
             <label class="form-label small fw-semibold">Jenis Pengajuan</label>
-            <select id="req-jenis" class="form-select form-select-sm">
-              <option value="IZIN">Izin Kepentingan Keluarga</option>
-              <option value="SAKIT">Sakit</option>
+            <select id="req-jenis" class="form-select form-select-sm" onchange="ubahPlaceholderAlasan()">
+              <option value="DISPENSASI">Dispensasi Kegiatan (Lomba / Olahraga / Tugas Sekolah)</option>
+              <option value="IZIN">Izin (Keperluan Keluarga / Acara Pribadi)</option>
+              <option value="SAKIT">Surat Keterangan Sakit</option>
             </select>
           </div>
           <div class="row g-2 mb-2">
@@ -59,10 +64,10 @@
             </div>
           </div>
           <div class="mb-3">
-            <label class="form-label small fw-semibold">Alasan Lengkap</label>
-            <textarea id="req-alasan" class="form-control form-control-sm" rows="3" required placeholder="Jelaskan alasan izin / sakit..."></textarea>
+            <label class="form-label small fw-semibold">Detail Alasan / Nama Lomba & Lokasi</label>
+            <textarea id="req-alasan" class="form-control form-control-sm" rows="3" required placeholder="Contoh: Mengikuti Kejuaraan Bola Voli Tingkat Kabupaten mewakili sekolah..."></textarea>
           </div>
-          <button type="submit" id="btn-save-req" class="btn btn-primary btn-sm w-100">Kirim Pengajuan</button>
+          <button type="submit" id="btn-save-req" class="btn btn-primary btn-sm w-100">Kirim Permohonan</button>
         </form>
       </div>
     </div>
@@ -70,46 +75,107 @@
 </div>
 
 <script>
+  let mapDaftarSiswaReq = {};
+
   async function loadDataPengajuan() {
     const tbody = document.getElementById('table-pengajuan-body');
     const session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
-    const isWali = (session.role === 'WALI_KELAS');
+    const role = session.role || 'SISWA';
+    const isWali = (role === 'WALI_KELAS');
 
     try {
+      // 1. Ambil nama siswa agar ID berubah jadi nama lengkap
+      const resSiswa = await postGAS({ action: 'getDataSiswa' });
+      if (resSiswa.status === 'success' && resSiswa.data) {
+        const selectSiswa = document.getElementById('req-student-select');
+        selectSiswa.innerHTML = '';
+        
+        resSiswa.data.forEach(s => {
+          mapDaftarSiswaReq[s.student_id] = s.nama_lengkap;
+          // Jika role siswa biasa, kunci pilihan hanya untuk dirinya
+          if (role === 'SISWA') {
+            if (s.student_id === session.student_id || s.nis == session.username) {
+              selectSiswa.innerHTML = `<option value="${s.student_id}" selected>${s.nama_lengkap} (${s.nis})</option>`;
+            }
+          } else {
+            selectSiswa.innerHTML += `<option value="${s.student_id}">${s.nama_lengkap} (${s.nis})</option>`;
+          }
+        });
+      }
+
+      // 2. Ambil data pengajuan
       const res = await postGAS({ action: 'getDataPengajuan' });
       if (res.status === 'success') {
         tbody.innerHTML = '';
-        if (res.data.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">Belum ada pengajuan izin.</td></tr>';
+        if (!res.data || res.data.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">Belum ada pengajuan izin atau dispensasi.</td></tr>';
           return;
         }
 
-        res.data.forEach((p, idx) => {
-          let badge = 'bg-secondary';
-          if (p.status === 'DISETUJUI') badge = 'bg-success';
-          else if (p.status === 'DITOLAK') badge = 'bg-danger';
-          else badge = 'bg-warning text-dark';
+        // Siswa biasa hanya melihat riwayat miliknya sendiri
+        let dataTampil = res.data;
+        if (role === 'SISWA') {
+          dataTampil = res.data.filter(p => p.student_id === session.student_id || p.student_id === session.username);
+        }
+
+        if (dataTampil.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">Anda belum memiliki riwayat pengajuan izin/dispensasi.</td></tr>';
+          return;
+        }
+
+        dataTampil.forEach((p, idx) => {
+          // Status Approval Badge
+          let statusBadge = 'bg-warning text-dark';
+          if (p.status === 'DISETUJUI') statusBadge = 'bg-success';
+          else if (p.status === 'DITOLAK') statusBadge = 'bg-danger';
+
+          // Jenis Badge
+          let jenisBadge = 'bg-info text-dark';
+          let jenisLabel = p.jenis_pengajuan || 'IZIN';
+          if (jenisLabel === 'DISPENSASI') {
+            jenisBadge = 'bg-primary';
+            jenisLabel = '<i class="fa-solid fa-medal me-1"></i>Dispensasi';
+          } else if (jenisLabel === 'SAKIT') {
+            jenisBadge = 'bg-warning text-dark';
+            jenisLabel = '<i class="fa-solid fa-heart-pulse me-1"></i>Sakit';
+          } else {
+            jenisLabel = '<i class="fa-solid fa-envelope me-1"></i>Izin Pribadi';
+          }
+
+          const namaSiswa = mapDaftarSiswaReq[p.student_id] || p.student_id;
 
           tbody.innerHTML += `
             <tr>
               <td>${idx + 1}</td>
-              <td class="fw-semibold">${p.student_id}</td>
-              <td><span class="badge ${p.jenis_pengajuan === 'SAKIT' ? 'bg-warning text-dark' : 'bg-info'}">${p.jenis_pengajuan}</span></td>
-              <td><small>${p.alasan || '-'}</small></td>
-              <td><small>${p.tanggal_mulai} s/d ${p.tanggal_selesai}</small></td>
-              <td class="text-center"><span class="badge ${badge}">${p.status || 'MENUNGGU'}</span></td>
+              <td class="fw-semibold text-dark">${namaSiswa}</td>
+              <td class="text-center"><span class="badge ${jenisBadge}">${jenisLabel}</span></td>
+              <td><small class="text-secondary">${p.alasan || '-'}</small></td>
+              <td><small class="text-muted">${p.tanggal_mulai} s.d ${p.tanggal_selesai}</small></td>
+              <td class="text-center"><span class="badge ${statusBadge}">${p.status || 'MENUNGGU'}</span></td>
               <td class="text-center">
                 ${isWali && p.status === 'MENUNGGU' ? `
-                  <button class="btn btn-sm btn-success py-0 px-2" onclick="ubahStatusPengajuan('${p.pengajuan_id}', 'DISETUJUI')" title="Setujui"><i class="fa-solid fa-check"></i></button>
+                  <button class="btn btn-sm btn-success py-0 px-2 me-1" onclick="ubahStatusPengajuan('${p.pengajuan_id}', 'DISETUJUI')" title="Setujui"><i class="fa-solid fa-check"></i></button>
                   <button class="btn btn-sm btn-danger py-0 px-2" onclick="ubahStatusPengajuan('${p.pengajuan_id}', 'DITOLAK')" title="Tolak"><i class="fa-solid fa-xmark"></i></button>
-                ` : '<small class="text-muted">-</small>'}
+                ` : '<span class="text-muted small">-</span>'}
               </td>
             </tr>
           `;
         });
       }
     } catch (e) {
-      tbody.innerHTML = '<tr><td colspan="7" class="text-danger text-center">Gagal memuat pengajuan.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" class="text-danger text-center">Gagal memuat data pengajuan.</td></tr>';
+    }
+  }
+
+  function ubahPlaceholderAlasan() {
+    const jenis = document.getElementById('req-jenis').value;
+    const txtAlasan = document.getElementById('req-alasan');
+    if (jenis === 'DISPENSASI') {
+      txtAlasan.placeholder = "Sebutkan nama kejuaraan/kegiatan, cabang olahraga/lomba, dan lokasi pelaksanaan...";
+    } else if (jenis === 'SAKIT') {
+      txtAlasan.placeholder = "Keterangan sakit / rawat jalan...";
+    } else {
+      txtAlasan.placeholder = "Sebutkan keperluan izin keluarga...";
     }
   }
 
@@ -118,6 +184,7 @@
     const today = new Date().toISOString().slice(0, 10);
     document.getElementById('req-mulai').value = today;
     document.getElementById('req-selesai').value = today;
+    ubahPlaceholderAlasan();
     new bootstrap.Modal(document.getElementById('modalPengajuan')).show();
   }
 
@@ -128,18 +195,21 @@
     btn.disabled = true;
 
     const session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
+    const studentIdTerpilih = document.getElementById('req-student-select').value;
+
     try {
       const res = await postGAS({
         action: 'savePengajuan',
         user_id: session.user_id,
         payload: {
-          student_id: session.student_id || session.username,
+          student_id: studentIdTerpilih,
           jenis_pengajuan: document.getElementById('req-jenis').value,
           tanggal_mulai: document.getElementById('req-mulai').value,
           tanggal_selesai: document.getElementById('req-selesai').value,
           alasan: document.getElementById('req-alasan').value.trim()
         }
       });
+
       alert(res.message);
       if (res.status === 'success') {
         bootstrap.Modal.getInstance(document.getElementById('modalPengajuan')).hide();
@@ -148,7 +218,7 @@
     } catch (err) {
       alert('Gagal mengirim pengajuan.');
     } finally {
-      btn.innerText = 'Kirim Pengajuan';
+      btn.innerText = 'Kirim Permohonan';
       btn.disabled = false;
     }
   }
@@ -165,7 +235,7 @@
       alert(res.message);
       loadDataPengajuan();
     } catch (e) {
-      alert('Gagal memperbarui status.');
+      alert('Gagal memproses persetujuan.');
     }
   }
 
