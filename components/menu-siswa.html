@@ -10,8 +10,8 @@
         </select>
       </div>
       <div class="d-flex gap-2" id="siswa-btn-actions">
-        <button class="btn btn-outline-success btn-sm" onclick="downloadTemplateSiswa()"><i class="fa-solid fa-download me-1"></i> Template</button>
-        <button class="btn btn-outline-primary btn-sm" onclick="bukaModalImportSiswa()"><i class="fa-solid fa-file-import me-1"></i> Import</button>
+        <button class="btn btn-outline-success btn-sm" onclick="downloadTemplateSiswa()"><i class="fa-solid fa-download me-1"></i> Template Excel</button>
+        <button class="btn btn-outline-primary btn-sm" onclick="bukaModalImportSiswa()"><i class="fa-solid fa-file-import me-1"></i> Import Excel</button>
         <button class="btn btn-primary btn-sm" onclick="bukaModalTambahSiswa()"><i class="fa-solid fa-user-plus me-1"></i> Tambah Siswa</button>
       </div>
     </div>
@@ -30,12 +30,127 @@
           </tr>
         </thead>
         <tbody id="table-siswa-body">
-          <tr><td colspan="7" class="text-center text-muted py-4">Memuat data siswa...</td></tr>
+          <tr><td colspan="7" class="text-center text-muted py-4"><div class="spinner-border spinner-border-sm text-primary me-2"></div>Memuat data siswa...</td></tr>
         </tbody>
       </table>
     </div>
   </div>
 </section>
+
+<!-- Modal Tambah / Edit Siswa -->
+<div class="modal fade" id="modalTambahSiswa" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-dark text-white">
+        <h6 class="modal-title fw-bold" id="modal-siswa-title"><i class="fa-solid fa-user-plus me-2"></i>Tambah Data Siswa</h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-3">
+        <form id="form-siswa" onsubmit="submitFormSiswa(event)">
+          <input type="hidden" id="fs-student-id">
+          
+          <h6 class="fw-bold text-primary mb-2 border-bottom pb-1 small">Identitas Siswa</h6>
+          <div class="row g-2 mb-2">
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">NIS</label>
+              <input type="text" id="fs-nis" class="form-control form-control-sm" required placeholder="Contoh: 3567">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">NISN</label>
+              <input type="text" id="fs-nisn" class="form-control form-control-sm" placeholder="Opsional">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">Jenis Kelamin</label>
+              <select id="fs-jk" class="form-select form-select-sm">
+                <option value="L">Laki-laki (L)</option>
+                <option value="P">Perempuan (P)</option>
+              </select>
+            </div>
+          </div>
+          <div class="mb-2">
+            <label class="form-label small fw-semibold">Nama Lengkap Siswa</label>
+            <input type="text" id="fs-nama" class="form-control form-control-sm" required placeholder="Nama lengkap sesuai rapor/ijazah">
+          </div>
+          <div class="row g-2 mb-2">
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Tempat Lahir</label>
+              <input type="text" id="fs-tempat-lahir" class="form-control form-control-sm" placeholder="Kota lahir">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Tanggal Lahir</label>
+              <input type="date" id="fs-tgl-lahir" class="form-control form-control-sm">
+            </div>
+          </div>
+          <div class="row g-2 mb-2">
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">No. HP / WhatsApp Siswa</label>
+              <input type="text" id="fs-hp" class="form-control form-control-sm" placeholder="08xxxxxxxxxx">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Email Siswa</label>
+              <input type="email" id="fs-email" class="form-control form-control-sm" placeholder="email@contoh.com">
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Alamat Tempat Tinggal</label>
+            <textarea id="fs-alamat" class="form-control form-control-sm" rows="2" placeholder="Alamat domisili siswa..."></textarea>
+          </div>
+
+          <h6 class="fw-bold text-primary mb-2 border-bottom pb-1 small">Data Orang Tua / Wali</h6>
+          <div class="row g-2 mb-2">
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Nama Ayah</label>
+              <input type="text" id="fs-ayah" class="form-control form-control-sm" placeholder="Nama ayah kandung/wali">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Nama Ibu</label>
+              <input type="text" id="fs-ibu" class="form-control form-control-sm" placeholder="Nama ibu kandung">
+            </div>
+          </div>
+          <div class="row g-2 mb-3">
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">No. HP / WhatsApp Orang Tua</label>
+              <input type="text" id="fs-hp-ortu" class="form-control form-control-sm" placeholder="08xxxxxxxxxx">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Pekerjaan Orang Tua</label>
+              <input type="text" id="fs-pek-ortu" class="form-control form-control-sm" placeholder="Pekerjaan orang tua">
+            </div>
+          </div>
+
+          <button type="submit" id="btn-save-fs" class="btn btn-primary btn-sm w-100 py-2 fw-semibold">
+            <i class="fa-solid fa-floppy-disk me-1"></i> Simpan Data Siswa
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Import Siswa via Excel -->
+<div class="modal fade" id="modalImportSiswa" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h6 class="modal-title fw-bold"><i class="fa-solid fa-file-import me-2"></i>Import Data Siswa dari Excel</h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-3">
+        <p class="small text-muted mb-2">
+          Gunakan file template Excel yang telah disediakan untuk memastikan struktur header kolom sesuai dengan sistem.
+        </p>
+        <div class="mb-3">
+          <label class="form-label small fw-semibold">Pilih Berkas Excel (.xlsx / .xls)</label>
+          <input type="file" id="file-import-siswa" class="form-control form-control-sm" accept=".xlsx, .xls">
+        </div>
+        <div id="import-preview-info" class="small text-secondary mb-3 d-none"></div>
+        <button type="button" id="btn-proses-import" class="btn btn-success btn-sm w-100" onclick="prosesImportExcelSiswa()">
+          Mulai Import Data
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- Modal Set Role Pengurus -->
 <div class="modal fade" id="modalRolePengurus" tabindex="-1">
@@ -71,11 +186,13 @@
     try {
       const res = await postGAS({ action: 'getDataSiswa' });
       if (res.status === 'success') {
-        dataSiswaList = res.data;
+        dataSiswaList = res.data || [];
         renderSiswa(dataSiswaList);
+      } else {
+        tbody.innerHTML = `<tr><td colspan="7" class="text-danger text-center py-4">${res.message}</td></tr>`;
       }
     } catch (e) {
-      tbody.innerHTML = '<tr><td colspan="7" class="text-danger text-center">Gagal memuat siswa.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" class="text-danger text-center py-4">Gagal memuat data siswa.</td></tr>';
     }
   }
 
@@ -85,9 +202,12 @@
     const session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
     const isWali = (session.role === 'WALI_KELAS');
 
-    if (!isWali) {
-      const actionDiv = document.getElementById('siswa-btn-actions');
-      if (actionDiv) actionDiv.style.display = 'none';
+    const actionDiv = document.getElementById('siswa-btn-actions');
+    if (actionDiv) actionDiv.style.display = isWali ? 'flex' : 'none';
+
+    if (list.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">Belum ada siswa terdaftar.</td></tr>';
+      return;
     }
 
     list.forEach((s, idx) => {
@@ -108,13 +228,16 @@
           <td>${s.no_hp || '-'}</td>
           <td class="text-center">
             ${isWali ? `
-              <button class="btn btn-sm btn-outline-warning me-1" onclick="resetPasswordSiswa('${s.student_id}', '${s.nama_lengkap}', '${s.nis}')" title="Reset Password ke siswa123">
+              <button class="btn btn-sm btn-outline-warning py-0 px-2 me-1" onclick="resetPasswordSiswa('${s.student_id}', '${s.nama_lengkap}', '${s.nis}')" title="Reset Password ke siswa123">
                 <i class="fa-solid fa-key"></i>
               </button>
-              <button class="btn btn-sm btn-outline-secondary me-1" onclick="bukaModalRole('${s.student_id}', '${s.nama_lengkap}', '${s.role || 'SISWA'}')" title="Ubah Jabatan">
+              <button class="btn btn-sm btn-outline-primary py-0 px-2 me-1" onclick="bukaModalEditSiswa('${s.student_id}')" title="Edit Data Siswa">
+                <i class="fa-solid fa-pen-to-square"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-secondary py-0 px-2 me-1" onclick="bukaModalRole('${s.student_id}', '${s.nama_lengkap}', '${s.role || 'SISWA'}')" title="Ubah Jabatan Pengurus">
                 <i class="fa-solid fa-user-shield"></i>
               </button>
-              <button class="btn btn-sm btn-outline-danger" onclick="hapusSiswa('${s.student_id}', '${s.nama_lengkap}')" title="Hapus Siswa">
+              <button class="btn btn-sm btn-outline-danger py-0 px-2" onclick="hapusSiswa('${s.student_id}', '${s.nama_lengkap}')" title="Hapus Siswa">
                 <i class="fa-solid fa-trash"></i>
               </button>
             ` : '<span class="text-muted small">View Only</span>'}
@@ -135,6 +258,177 @@
     renderSiswa(filtered);
   }
 
+  // MODAL TAMBAH & EDIT SISWA
+  function bukaModalTambahSiswa() {
+    document.getElementById('form-siswa').reset();
+    document.getElementById('fs-student-id').value = '';
+    document.getElementById('modal-siswa-title').innerHTML = '<i class="fa-solid fa-user-plus me-2"></i>Tambah Data Siswa';
+    new bootstrap.Modal(document.getElementById('modalTambahSiswa')).show();
+  }
+
+  function bukaModalEditSiswa(studentId) {
+    const s = dataSiswaList.find(x => x.student_id === studentId);
+    if (!s) return;
+
+    document.getElementById('form-siswa').reset();
+    document.getElementById('fs-student-id').value = s.student_id;
+    document.getElementById('fs-nis').value = s.nis || '';
+    document.getElementById('fs-nisn').value = s.nisn || '';
+    document.getElementById('fs-jk').value = s.jenis_kelamin || 'L';
+    document.getElementById('fs-nama').value = s.nama_lengkap || '';
+    document.getElementById('fs-tempat-lahir').value = s.tempat_lahir || '';
+    document.getElementById('fs-tgl-lahir').value = (s.tanggal_lahir || '').toString().slice(0, 10);
+    document.getElementById('fs-hp').value = s.no_hp || '';
+    document.getElementById('fs-email').value = s.email || '';
+    document.getElementById('fs-alamat').value = s.alamat || '';
+    document.getElementById('fs-ayah').value = s.nama_ayah || '';
+    document.getElementById('fs-ibu').value = s.nama_ibu || '';
+    document.getElementById('fs-hp-ortu').value = s.no_hp_ortu || '';
+    document.getElementById('fs-pek-ortu').value = s.pekerjaan_ayah || '';
+
+    document.getElementById('modal-siswa-title').innerHTML = '<i class="fa-solid fa-pen-to-square me-2"></i>Edit Data Siswa';
+    new bootstrap.Modal(document.getElementById('modalTambahSiswa')).show();
+  }
+
+  async function submitFormSiswa(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btn-save-fs');
+    btn.innerText = 'Menyimpan...';
+    btn.disabled = true;
+
+    const session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
+    const payloadData = {
+      student_id: document.getElementById('fs-student-id').value,
+      nis: document.getElementById('fs-nis').value.trim(),
+      nisn: document.getElementById('fs-nisn').value.trim(),
+      nama_lengkap: document.getElementById('fs-nama').value.trim(),
+      jenis_kelamin: document.getElementById('fs-jk').value,
+      tempat_lahir: document.getElementById('fs-tempat-lahir').value.trim(),
+      tanggal_lahir: document.getElementById('fs-tgl-lahir').value,
+      no_hp: document.getElementById('fs-hp').value.trim(),
+      email: document.getElementById('fs-email').value.trim(),
+      alamat: document.getElementById('fs-alamat').value.trim(),
+      nama_ayah: document.getElementById('fs-ayah').value.trim(),
+      nama_ibu: document.getElementById('fs-ibu').value.trim(),
+      no_hp_ortu: document.getElementById('fs-hp-ortu').value.trim(),
+      pekerjaan_ayah: document.getElementById('fs-pek-ortu').value.trim()
+    };
+
+    try {
+      const res = await postGAS({
+        action: 'saveSiswa',
+        user_id: session.user_id,
+        payload: payloadData
+      });
+
+      alert(res.message);
+      if (res.status === 'success') {
+        bootstrap.Modal.getInstance(document.getElementById('modalTambahSiswa')).hide();
+        loadTabelSiswa();
+      }
+    } catch (err) {
+      alert('Gagal menyimpan data siswa.');
+    } finally {
+      btn.innerText = 'Simpan Data Siswa';
+      btn.disabled = false;
+    }
+  }
+
+  // DOWNLOAD TEMPLATE EXCEL
+  function downloadTemplateSiswa() {
+    if (typeof XLSX === 'undefined') {
+      alert('Library SheetJS belum siap. Muat ulang halaman.');
+      return;
+    }
+
+    const templateHeaders = [
+      {
+        nis: "3567",
+        nisn: "0081234567",
+        nama_lengkap: "Ahmad Rizky Pratama",
+        jenis_kelamin: "L",
+        tempat_lahir: "Banyuwangi",
+        tanggal_lahir: "2008-05-14",
+        alamat: "Jl. Raya Wongsorejo No. 12",
+        no_hp: "081234567890",
+        email: "ahmad@gmail.com",
+        nama_ayah: "Budi Santoso",
+        nama_ibu: "Siti Aminah",
+        pekerjaan_ayah: "Wiraswasta",
+        no_hp_ortu: "081987654321",
+        alamat_ortu: "Jl. Raya Wongsorejo No. 12"
+      }
+    ];
+
+    const worksheet = XLSX.utils.json_to_sheet(templateHeaders);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "DATA_SISWA");
+    XLSX.writeFile(workbook, "Template_Import_Siswa_SIMKEL.xlsx");
+  }
+
+  // IMPORT EXCEL
+  function bukaModalImportSiswa() {
+    document.getElementById('file-import-siswa').value = '';
+    const info = document.getElementById('import-preview-info');
+    info.classList.add('d-none');
+    info.innerHTML = '';
+    new bootstrap.Modal(document.getElementById('modalImportSiswa')).show();
+  }
+
+  function prosesImportExcelSiswa() {
+    const fileInput = document.getElementById('file-import-siswa');
+    if (!fileInput.files || fileInput.files.length === 0) {
+      alert('Pilih berkas Excel (.xlsx / .xls) terlebih dahulu.');
+      return;
+    }
+
+    const file = fileInput.files[0];
+    const reader = new FileReader();
+    const btn = document.getElementById('btn-proses-import');
+
+    btn.innerText = 'Membaca Berkas...';
+    btn.disabled = true;
+
+    reader.onload = async function(e) {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+
+        if (rows.length === 0) {
+          alert('Berkas Excel kosong atau format tidak sesuai.');
+          btn.innerText = 'Mulai Import Data';
+          btn.disabled = false;
+          return;
+        }
+
+        btn.innerText = `Mengimpor ${rows.length} Siswa...`;
+        const session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
+
+        const res = await postGAS({
+          action: 'importSiswaBatch',
+          user_id: session.user_id,
+          rows: rows
+        });
+
+        alert(res.message);
+        if (res.status === 'success') {
+          bootstrap.Modal.getInstance(document.getElementById('modalImportSiswa')).hide();
+          loadTabelSiswa();
+        }
+      } catch (err) {
+        alert('Terjadi kesalahan saat membaca file Excel: ' + err.toString());
+      } finally {
+        btn.innerText = 'Mulai Import Data';
+        btn.disabled = false;
+      }
+    };
+
+    reader.readAsArrayBuffer(file);
+  }
+
+  // RESET PASSWORD
   async function resetPasswordSiswa(studentId, nama, nis) {
     if (!confirm(`Reset password untuk siswa ${nama} (NIS: ${nis}) menjadi "siswa123"?`)) return;
     const session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
@@ -150,6 +444,7 @@
     }
   }
 
+  // JABATAN PENGURUS
   function bukaModalRole(studentId, nama, currentRole) {
     document.getElementById('fr-student-id').value = studentId;
     document.getElementById('fr-nama-siswa').innerText = nama;
@@ -174,6 +469,7 @@
     }
   }
 
+  // HAPUS SISWA
   async function hapusSiswa(studentId, nama) {
     if (!confirm('Hapus siswa ' + nama + '?')) return;
     const session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
