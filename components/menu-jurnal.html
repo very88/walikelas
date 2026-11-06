@@ -1,0 +1,159 @@
+<section id="panel-jurnal">
+  <div class="card card-kpi">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+      <div>
+        <h6 class="fw-bold mb-0 text-primary"><i class="fa-solid fa-book-journal-whills me-1"></i> Jurnal Agenda & KBM Kelas</h6>
+        <small class="text-muted">Dicatat oleh Wali Kelas, Ketua Kelas, Sekretaris, atau Bendahara</small>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="bukaModalTambahJurnal()">
+        <i class="fa-solid fa-plus me-1"></i> Tambah Jurnal Harian
+      </button>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead class="table-dark">
+          <tr>
+            <th style="width: 45px;">No</th>
+            <th>Tanggal</th>
+            <th>Nama Kegiatan / KBM</th>
+            <th>Deskripsi / Notulen</th>
+            <th>Lokasi</th>
+            <th>Penanggung Jawab</th>
+            <th class="text-center" style="width: 80px;">Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="table-jurnal-body">
+          <tr><td colspan="7" class="text-center text-muted py-4"><div class="spinner-border spinner-border-sm text-primary me-2"></div>Memuat jurnal...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- Modal Input Jurnal -->
+<div class="modal fade" id="modalInputJurnal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h6 class="modal-title fw-bold">Tambah Jurnal Kelas</h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-3">
+        <form id="form-jurnal" onsubmit="submitFormJurnal(event)">
+          <div class="row g-2 mb-2">
+            <div class="col-6">
+              <label class="form-label small fw-semibold">Tanggal</label>
+              <input type="date" id="j-tgl" class="form-control form-control-sm" required>
+            </div>
+            <div class="col-6">
+              <label class="form-label small fw-semibold">Lokasi</label>
+              <input type="text" id="j-lokasi" class="form-control form-control-sm" value="Ruang Kelas" required>
+            </div>
+          </div>
+          <div class="mb-2">
+            <label class="form-label small fw-semibold">Nama Kegiatan / Pelajaran</label>
+            <input type="text" id="j-nama" class="form-control form-control-sm" placeholder="Contoh: KBM Penjas Materi Bola Voli" required>
+          </div>
+          <div class="mb-2">
+            <label class="form-label small fw-semibold">Deskripsi / Hasil Notulen</label>
+            <textarea id="j-deskripsi" class="form-control form-control-sm" rows="3" placeholder="Uraian kegiatan atau tugas kelas..." required></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Penanggung Jawab / Guru</label>
+            <input type="text" id="j-pj" class="form-control form-control-sm" placeholder="Contoh: Nama Guru / Sekretaris" required>
+          </div>
+          <button type="submit" id="btn-save-j" class="btn btn-primary btn-sm w-100">Simpan Jurnal</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  async function loadDataJurnal() {
+    const tbody = document.getElementById('table-jurnal-body');
+    try {
+      const res = await postGAS({ action: 'getDataJurnal' });
+      if (res.status === 'success') {
+        tbody.innerHTML = '';
+        if (res.data.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">Belum ada jurnal yang tersimpan.</td></tr>';
+          return;
+        }
+        res.data.forEach((j, idx) => {
+          const tgl = (j.tanggal || '').toString().slice(0, 10);
+          tbody.innerHTML += `
+            <tr>
+              <td>${idx + 1}</td>
+              <td><small class="text-muted">${tgl}</small></td>
+              <td class="fw-semibold text-dark">${j.nama_kegiatan || '-'}</td>
+              <td><small class="text-secondary">${j.deskripsi || '-'}</small></td>
+              <td><span class="badge bg-light text-dark border">${j.lokasi || 'Kelas'}</span></td>
+              <td><small>${j.penanggung_jawab || '-'}</small></td>
+              <td class="text-center">
+                <button class="btn btn-sm btn-outline-danger" onclick="hapusJurnal('${j.kegiatan_id}')"><i class="fa-solid fa-trash"></i></button>
+              </td>
+            </tr>
+          `;
+        });
+      } else {
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger py-4">${res.message}</td></tr>`;
+      }
+    } catch (e) {
+      tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">Gagal memuat jurnal.</td></tr>';
+    }
+  }
+
+  function bukaModalTambahJurnal() {
+    document.getElementById('form-jurnal').reset();
+    document.getElementById('j-tgl').value = new Date().toISOString().slice(0, 10);
+    new bootstrap.Modal(document.getElementById('modalInputJurnal')).show();
+  }
+
+  async function submitFormJurnal(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btn-save-j');
+    btn.innerText = 'Menyimpan...';
+    btn.disabled = true;
+
+    const session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
+    try {
+      const res = await postGAS({
+        action: 'saveJurnal',
+        user_id: session.user_id,
+        payload: {
+          tanggal: document.getElementById('j-tgl').value,
+          lokasi: document.getElementById('j-lokasi').value.trim(),
+          nama_kegiatan: document.getElementById('j-nama').value.trim(),
+          deskripsi: document.getElementById('j-deskripsi').value.trim(),
+          penanggung_jawab: document.getElementById('j-pj').value.trim()
+        }
+      });
+      alert(res.message);
+      if (res.status === 'success') {
+        bootstrap.Modal.getInstance(document.getElementById('modalInputJurnal')).hide();
+        loadDataJurnal();
+      }
+    } catch (err) {
+      alert('Gagal menyimpan jurnal.');
+    } finally {
+      btn.innerText = 'Simpan Jurnal';
+      btn.disabled = false;
+    }
+  }
+
+  async function hapusJurnal(id) {
+    if (!confirm('Hapus jurnal ini?')) return;
+    const session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
+    try {
+      const res = await postGAS({ action: 'deleteJurnal', kegiatan_id: id, user_id: session.user_id });
+      alert(res.message);
+      loadDataJurnal();
+    } catch (e) {
+      alert('Gagal menghapus.');
+    }
+  }
+
+  loadDataJurnal();
+</script>

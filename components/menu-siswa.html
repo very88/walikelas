@@ -1,0 +1,190 @@
+<section id="panel-siswa">
+  <div class="card card-kpi">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+      <div class="d-flex gap-2 align-items-center">
+        <input type="text" id="cari-siswa" class="form-control form-control-sm" style="width: 220px;" placeholder="Cari nama atau NIS..." onkeyup="filterSiswa()">
+        <select id="filter-jk" class="form-select form-select-sm" style="width: 140px;" onchange="filterSiswa()">
+          <option value="">Semua Gender</option>
+          <option value="L">Laki-laki</option>
+          <option value="P">Perempuan</option>
+        </select>
+      </div>
+      <div class="d-flex gap-2" id="siswa-btn-actions">
+        <button class="btn btn-outline-success btn-sm" onclick="downloadTemplateSiswa()"><i class="fa-solid fa-download me-1"></i> Template</button>
+        <button class="btn btn-outline-primary btn-sm" onclick="bukaModalImportSiswa()"><i class="fa-solid fa-file-import me-1"></i> Import</button>
+        <button class="btn btn-primary btn-sm" onclick="bukaModalTambahSiswa()"><i class="fa-solid fa-user-plus me-1"></i> Tambah Siswa</button>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead class="table-dark">
+          <tr>
+            <th style="width: 45px;">No</th>
+            <th>NIS</th>
+            <th>Nama Lengkap</th>
+            <th>L/P</th>
+            <th>Jabatan / Role</th>
+            <th>No HP / WA</th>
+            <th class="text-center" style="width: 180px;">Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="table-siswa-body">
+          <tr><td colspan="7" class="text-center text-muted py-4">Memuat data siswa...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- Modal Set Role Pengurus -->
+<div class="modal fade" id="modalRolePengurus" tabindex="-1">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+      <div class="modal-header bg-dark text-white">
+        <h6 class="modal-title fw-bold">Jabatan Pengurus</h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-3">
+        <input type="hidden" id="fr-student-id">
+        <div class="mb-2"><label class="small text-muted">Siswa:</label><div id="fr-nama-siswa" class="fw-bold"></div></div>
+        <div class="mb-3">
+          <label class="form-label small fw-semibold">Pilih Role</label>
+          <select id="fr-role" class="form-select form-select-sm">
+            <option value="SISWA">Siswa Biasa</option>
+            <option value="KETUA_KELAS">Ketua Kelas</option>
+            <option value="SEKRETARIS">Sekretaris</option>
+            <option value="BENDAHARA">Bendahara</option>
+          </select>
+        </div>
+        <button type="button" class="btn btn-primary btn-sm w-100" onclick="simpanRolePengurus()">Simpan Jabatan</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let dataSiswaList = [];
+
+  async function loadTabelSiswa() {
+    const tbody = document.getElementById('table-siswa-body');
+    try {
+      const res = await postGAS({ action: 'getDataSiswa' });
+      if (res.status === 'success') {
+        dataSiswaList = res.data;
+        renderSiswa(dataSiswaList);
+      }
+    } catch (e) {
+      tbody.innerHTML = '<tr><td colspan="7" class="text-danger text-center">Gagal memuat siswa.</td></tr>';
+    }
+  }
+
+  function renderSiswa(list) {
+    const tbody = document.getElementById('table-siswa-body');
+    tbody.innerHTML = '';
+    const session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
+    const isWali = (session.role === 'WALI_KELAS');
+
+    if (!isWali) {
+      const actionDiv = document.getElementById('siswa-btn-actions');
+      if (actionDiv) actionDiv.style.display = 'none';
+    }
+
+    list.forEach((s, idx) => {
+      let rBadge = 'bg-secondary';
+      let rLabel = s.role || 'SISWA';
+      if (rLabel === 'KETUA_KELAS') { rBadge = 'bg-primary'; rLabel = 'Ketua'; }
+      else if (rLabel === 'SEKRETARIS') { rBadge = 'bg-info text-dark'; rLabel = 'Sekretaris'; }
+      else if (rLabel === 'BENDAHARA') { rBadge = 'bg-success'; rLabel = 'Bendahara'; }
+      else { rLabel = 'Anggota'; }
+
+      tbody.innerHTML += `
+        <tr>
+          <td>${idx + 1}</td>
+          <td class="fw-semibold">${s.nis || '-'}</td>
+          <td>${s.nama_lengkap || '-'}</td>
+          <td><span class="badge ${s.jenis_kelamin === 'L' ? 'bg-primary' : 'bg-danger'}">${s.jenis_kelamin || '-'}</span></td>
+          <td><span class="badge ${rBadge}">${rLabel}</span></td>
+          <td>${s.no_hp || '-'}</td>
+          <td class="text-center">
+            ${isWali ? `
+              <button class="btn btn-sm btn-outline-warning me-1" onclick="resetPasswordSiswa('${s.student_id}', '${s.nama_lengkap}', '${s.nis}')" title="Reset Password ke siswa123">
+                <i class="fa-solid fa-key"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-secondary me-1" onclick="bukaModalRole('${s.student_id}', '${s.nama_lengkap}', '${s.role || 'SISWA'}')" title="Ubah Jabatan">
+                <i class="fa-solid fa-user-shield"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-danger" onclick="hapusSiswa('${s.student_id}', '${s.nama_lengkap}')" title="Hapus Siswa">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            ` : '<span class="text-muted small">View Only</span>'}
+          </td>
+        </tr>
+      `;
+    });
+  }
+
+  function filterSiswa() {
+    const q = document.getElementById('cari-siswa').value.toLowerCase();
+    const g = document.getElementById('filter-jk').value;
+    const filtered = dataSiswaList.filter(s => {
+      const matchQ = (s.nama_lengkap || '').toLowerCase().includes(q) || (s.nis || '').toString().includes(q);
+      const matchG = g ? (s.jenis_kelamin === g) : true;
+      return matchQ && matchG;
+    });
+    renderSiswa(filtered);
+  }
+
+  async function resetPasswordSiswa(studentId, nama, nis) {
+    if (!confirm(`Reset password untuk siswa ${nama} (NIS: ${nis}) menjadi "siswa123"?`)) return;
+    const session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
+    try {
+      const res = await postGAS({
+        action: 'resetPasswordSiswa',
+        student_id: studentId,
+        user_id: session.user_id
+      });
+      alert(res.message);
+    } catch (e) {
+      alert('Gagal me-reset password.');
+    }
+  }
+
+  function bukaModalRole(studentId, nama, currentRole) {
+    document.getElementById('fr-student-id').value = studentId;
+    document.getElementById('fr-nama-siswa').innerText = nama;
+    document.getElementById('fr-role').value = currentRole;
+    new bootstrap.Modal(document.getElementById('modalRolePengurus')).show();
+  }
+
+  async function simpanRolePengurus() {
+    const session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
+    try {
+      const res = await postGAS({
+        action: 'setRolePengurus',
+        student_id: document.getElementById('fr-student-id').value,
+        role: document.getElementById('fr-role').value,
+        user_id: session.user_id
+      });
+      alert(res.message);
+      bootstrap.Modal.getInstance(document.getElementById('modalRolePengurus')).hide();
+      loadTabelSiswa();
+    } catch (e) {
+      alert('Gagal mengubah role.');
+    }
+  }
+
+  async function hapusSiswa(studentId, nama) {
+    if (!confirm('Hapus siswa ' + nama + '?')) return;
+    const session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
+    try {
+      const res = await postGAS({ action: 'deleteSiswa', student_id: studentId, user_id: session.user_id });
+      alert(res.message);
+      loadTabelSiswa();
+    } catch (e) {
+      alert('Gagal menghapus siswa.');
+    }
+  }
+
+  loadTabelSiswa();
+</script>

@@ -1,1 +1,74 @@
+<section id="panel-dashboard">
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <div class="card card-kpi">
+        <span class="text-muted small fw-semibold">Total Siswa</span>
+        <h2 id="kpi-total-siswa" class="fw-bold my-1 text-primary">0</h2>
+        <small class="text-muted"><i class="fa-solid fa-id-card me-1"></i> Terdaftar aktif</small>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card card-kpi">
+        <span class="text-muted small fw-semibold">Kehadiran Hari Ini</span>
+        <h2 id="kpi-hadir-today" class="fw-bold my-1 text-success">0</h2>
+        <small class="text-muted"><i class="fa-solid fa-check-circle me-1"></i> Hadir tepat waktu</small>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card card-kpi">
+        <span class="text-muted small fw-semibold">Saldo Kas Kelas</span>
+        <h2 id="kpi-saldo-kas" class="fw-bold my-1 text-info">Rp 0</h2>
+        <small class="text-muted"><i class="fa-solid fa-coins me-1"></i> Kas kelas aktif</small>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card card-kpi">
+        <span class="text-muted small fw-semibold">Early Warning (EWS)</span>
+        <h2 id="kpi-ews-count" class="fw-bold my-1 text-danger">0</h2>
+        <small class="text-danger"><i class="fa-solid fa-triangle-exclamation me-1"></i> Perlu perhatian</small>
+      </div>
+    </div>
+  </div>
 
+  <div class="card card-kpi p-3">
+    <h6 class="fw-bold mb-3">Tren Tingkat Kehadiran Mingguan</h6>
+    <div style="position: relative; height: 280px; width: 100%;">
+      <canvas id="weeklyAttendanceChart"></canvas>
+    </div>
+  </div>
+</section>
+
+<script>
+  (async function() {
+    try {
+      const res = await postGAS({ action: 'getDashboardData' });
+      if (res.status === 'success') {
+        document.getElementById('kpi-total-siswa').innerText = res.stats.total_siswa;
+        document.getElementById('kpi-hadir-today').innerText = res.stats.hadir_hari_ini;
+        document.getElementById('kpi-ews-count').innerText = res.stats.perlu_perhatian;
+        document.getElementById('kpi-saldo-kas').innerText = 'Rp ' + Number(res.stats.saldo_kas || 0).toLocaleString('id-ID');
+      }
+    } catch (e) {}
+
+    const ctx = document.getElementById('weeklyAttendanceChart').getContext('2d');
+    if (window.dashChart) window.dashChart.destroy();
+    window.dashChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat'],
+        datasets: [{
+          label: 'Kehadiran (%)',
+          data: [96, 94, 98, 92, 95],
+          backgroundColor: '#2563EB',
+          borderRadius: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { min: 0, max: 100 } }
+      }
+    });
+  })();
+</script>

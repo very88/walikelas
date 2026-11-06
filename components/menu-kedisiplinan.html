@@ -1,0 +1,168 @@
+<section id="panel-kedisiplinan">
+  <div class="card card-kpi">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+      <div>
+        <h6 class="fw-bold mb-0 text-danger"><i class="fa-solid fa-shield-halved me-1"></i> Pelanggaran & Early Warning System (EWS)</h6>
+        <small class="text-muted">Catatan pembinaan siswa dan akumulasi poin</small>
+      </div>
+      <button class="btn btn-danger btn-sm" onclick="bukaModalPelanggaran()">
+        <i class="fa-solid fa-plus me-1"></i> Catat Pelanggaran
+      </button>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead class="table-dark">
+          <tr>
+            <th style="width: 45px;">No</th>
+            <th>Tanggal</th>
+            <th>Nama Siswa</th>
+            <th>Jenis Pelanggaran</th>
+            <th class="text-center">Poin</th>
+            <th>Tindakan Pembinaan</th>
+            <th class="text-center" style="width: 80px;">Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="table-pelanggaran-body">
+          <tr><td colspan="7" class="text-center text-muted py-4">Memuat data kedisiplinan...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- Modal Input Pelanggaran -->
+<div class="modal fade" id="modalPelanggaran" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h6 class="modal-title fw-bold">Catat Pelanggaran</h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-3">
+        <form id="form-pelanggaran" onsubmit="submitFormPelanggaran(event)">
+          <div class="mb-2">
+            <label class="form-label small fw-semibold">Pilih Siswa</label>
+            <select id="fp-student-id" class="form-select form-select-sm" required></select>
+          </div>
+          <div class="row g-2 mb-2">
+            <div class="col-6">
+              <label class="form-label small fw-semibold">Tanggal</label>
+              <input type="date" id="fp-tanggal" class="form-control form-control-sm" required>
+            </div>
+            <div class="col-6">
+              <label class="form-label small fw-semibold">Poin Pelanggaran</label>
+              <input type="number" id="fp-poin" class="form-control form-control-sm" min="1" value="5" required>
+            </div>
+          </div>
+          <div class="mb-2">
+            <label class="form-label small fw-semibold">Jenis Pelanggaran</label>
+            <input type="text" id="fp-jenis" class="form-control form-control-sm" placeholder="Contoh: Terlambat, Merusak fasilitas" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Tindakan Pembinaan</label>
+            <textarea id="fp-tindakan" class="form-control form-control-sm" rows="2" placeholder="Peringatan lisan, pemanggilan orang tua..."></textarea>
+          </div>
+          <button type="submit" id="btn-save-fp" class="btn btn-danger btn-sm w-100">Simpan Catatan</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  async function loadDataPelanggaran() {
+    const tbody = document.getElementById('table-pelanggaran-body');
+    try {
+      const resSiswa = await postGAS({ action: 'getDataSiswa' });
+      const sMap = {};
+      if (resSiswa.status === 'success') {
+        const sel = document.getElementById('fp-student-id');
+        sel.innerHTML = '<option value="">-- Pilih Siswa --</option>';
+        resSiswa.data.forEach(s => {
+          sMap[s.student_id] = s.nama_lengkap;
+          sel.innerHTML += `<option value="${s.student_id}">${s.nama_lengkap} (${s.nis})</option>`;
+        });
+      }
+
+      const res = await postGAS({ action: 'getDataPelanggaran' });
+      if (res.status === 'success') {
+        tbody.innerHTML = '';
+        if (res.data.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">Belum ada pelanggaran tercatat.</td></tr>';
+          return;
+        }
+        res.data.forEach((p, idx) => {
+          const tgl = (p.tanggal || '').toString().slice(0, 10);
+          tbody.innerHTML += `
+            <tr>
+              <td>${idx + 1}</td>
+              <td><small class="text-muted">${tgl}</small></td>
+              <td class="fw-semibold text-dark">${sMap[p.student_id] || p.student_id}</td>
+              <td>${p.jenis_pelanggaran || '-'}</td>
+              <td class="text-center"><span class="badge bg-danger">+${p.poin || 0} Poin</span></td>
+              <td><small class="text-secondary">${p.tindakan_pembinaan || '-'}</small></td>
+              <td class="text-center">
+                <button class="btn btn-sm btn-outline-danger" onclick="hapusPelanggaran('${p.pelanggaran_id}')"><i class="fa-solid fa-trash"></i></button>
+              </td>
+            </tr>
+          `;
+        });
+      }
+    } catch (e) {
+      tbody.innerHTML = '<tr><td colspan="7" class="text-danger text-center">Gagal memuat pelanggaran.</td></tr>';
+    }
+  }
+
+  function bukaModalPelanggaran() {
+    document.getElementById('form-pelanggaran').reset();
+    document.getElementById('fp-tanggal').value = new Date().toISOString().slice(0, 10);
+    new bootstrap.Modal(document.getElementById('modalPelanggaran')).show();
+  }
+
+  async function submitFormPelanggaran(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btn-save-fp');
+    btn.innerText = 'Menyimpan...';
+    btn.disabled = true;
+
+    const session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
+    try {
+      const res = await postGAS({
+        action: 'savePelanggaran',
+        user_id: session.user_id,
+        payload: {
+          student_id: document.getElementById('fp-student-id').value,
+          tanggal: document.getElementById('fp-tanggal').value,
+          jenis_pelanggaran: document.getElementById('fp-jenis').value.trim(),
+          poin: document.getElementById('fp-poin').value,
+          tindakan_pembinaan: document.getElementById('fp-tindakan').value.trim()
+        }
+      });
+      alert(res.message);
+      if (res.status === 'success') {
+        bootstrap.Modal.getInstance(document.getElementById('modalPelanggaran')).hide();
+        loadDataPelanggaran();
+      }
+    } catch (err) {
+      alert('Gagal menyimpan pelanggaran.');
+    } finally {
+      btn.innerText = 'Simpan Catatan';
+      btn.disabled = false;
+    }
+  }
+
+  async function hapusPelanggaran(id) {
+    if (!confirm('Hapus catatan ini?')) return;
+    const session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
+    try {
+      const res = await postGAS({ action: 'deletePelanggaran', pelanggaran_id: id, user_id: session.user_id });
+      alert(res.message);
+      loadDataPelanggaran();
+    } catch (e) {
+      alert('Gagal menghapus.');
+    }
+  }
+
+  loadDataPelanggaran();
+</script>

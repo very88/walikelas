@@ -1,0 +1,176 @@
+<section id="panel-kas">
+  <div class="card card-kpi">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+      <div>
+        <h6 class="fw-bold mb-0 text-success"><i class="fa-solid fa-wallet me-1"></i> Pembukuan Kas & Keuangan Kelas</h6>
+        <small class="text-muted">Dikelola oleh Bendahara Kelas & Wali Kelas</small>
+      </div>
+      <button class="btn btn-success btn-sm" id="btn-tambah-kas" onclick="bukaModalKas()">
+        <i class="fa-solid fa-plus me-1"></i> Catat Transaksi Kas
+      </button>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead class="table-dark">
+          <tr>
+            <th style="width: 45px;">No</th>
+            <th>Tanggal</th>
+            <th>Jenis</th>
+            <th>Jumlah (Rp)</th>
+            <th>Siswa Terkait</th>
+            <th>Keterangan</th>
+            <th class="text-center" style="width: 80px;">Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="table-kas-body">
+          <tr><td colspan="7" class="text-center text-muted py-4">Memuat data kas...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- Modal Input Kas -->
+<div class="modal fade" id="modalKas" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h6 class="modal-title fw-bold">Catat Transaksi Kas</h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-3">
+        <form id="form-kas" onsubmit="submitFormKas(event)">
+          <div class="row g-2 mb-2">
+            <div class="col-6">
+              <label class="form-label small fw-semibold">Tanggal</label>
+              <input type="date" id="fk-tanggal" class="form-control form-control-sm" required>
+            </div>
+            <div class="col-6">
+              <label class="form-label small fw-semibold">Jenis</label>
+              <select id="fk-jenis" class="form-select form-select-sm">
+                <option value="PEMASUKAN">Pemasukan (Kas Masuk)</option>
+                <option value="PENGELUARAN">Pengeluaran (Kas Keluar)</option>
+              </select>
+            </div>
+          </div>
+          <div class="mb-2">
+            <label class="form-label small fw-semibold">Jumlah (Rp)</label>
+            <input type="number" id="fk-jumlah" class="form-control form-control-sm" min="500" step="500" placeholder="10000" required>
+          </div>
+          <div class="mb-2">
+            <label class="form-label small fw-semibold">Siswa (Opsional)</label>
+            <select id="fk-student-id" class="form-select form-select-sm"></select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Keterangan</label>
+            <textarea id="fk-keterangan" class="form-control form-control-sm" rows="2" placeholder="Uraian kas..."></textarea>
+          </div>
+          <button type="submit" id="btn-save-kas" class="btn btn-success btn-sm w-100">Simpan Transaksi</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  async function loadDataKas() {
+    const tbody = document.getElementById('table-kas-body');
+    const session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
+    const canManage = (session.role === 'BENDAHARA' || session.role === 'WALI_KELAS');
+    if (!canManage) document.getElementById('btn-tambah-kas').style.display = 'none';
+
+    try {
+      const resSiswa = await postGAS({ action: 'getDataSiswa' });
+      const sMap = {};
+      if (resSiswa.status === 'success') {
+        const sel = document.getElementById('fk-student-id');
+        sel.innerHTML = '<option value="-">-- Umum / Tanpa Siswa --</option>';
+        resSiswa.data.forEach(s => {
+          sMap[s.student_id] = s.nama_lengkap;
+          sel.innerHTML += `<option value="${s.student_id}">${s.nama_lengkap} (${s.nis})</option>`;
+        });
+      }
+
+      const res = await postGAS({ action: 'getDataKas' });
+      if (res.status === 'success') {
+        tbody.innerHTML = '';
+        if (res.data.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">Belum ada transaksi kas.</td></tr>';
+          return;
+        }
+        res.data.forEach((k, idx) => {
+          const tgl = (k.tanggal || '').toString().slice(0, 10);
+          const isMasuk = (k.jenis_transaksi === 'PEMASUKAN');
+          tbody.innerHTML += `
+            <tr>
+              <td>${idx + 1}</td>
+              <td><small class="text-muted">${tgl}</small></td>
+              <td><span class="badge ${isMasuk ? 'bg-success' : 'bg-danger'}">${k.jenis_transaksi}</span></td>
+              <td class="fw-bold ${isMasuk ? 'text-success' : 'text-danger'}">Rp ${Number(k.jumlah || 0).toLocaleString('id-ID')}</td>
+              <td>${sMap[k.student_id] || (k.student_id !== '-' ? k.student_id : '-')}</td>
+              <td><small class="text-secondary">${k.keterangan || '-'}</small></td>
+              <td class="text-center">
+                ${canManage ? `<button class="btn btn-sm btn-outline-danger" onclick="hapusKas('${k.kas_id}')"><i class="fa-solid fa-trash"></i></button>` : '-'}
+              </td>
+            </tr>
+          `;
+        });
+      }
+    } catch (e) {
+      tbody.innerHTML = '<tr><td colspan="7" class="text-danger text-center">Gagal memuat kas.</td></tr>';
+    }
+  }
+
+  function bukaModalKas() {
+    document.getElementById('form-kas').reset();
+    document.getElementById('fk-tanggal').value = new Date().toISOString().slice(0, 10);
+    new bootstrap.Modal(document.getElementById('modalKas')).show();
+  }
+
+  async function submitFormKas(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btn-save-kas');
+    btn.innerText = 'Menyimpan...';
+    btn.disabled = true;
+
+    const session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
+    try {
+      const res = await postGAS({
+        action: 'saveKas',
+        user_id: session.user_id,
+        payload: {
+          tanggal: document.getElementById('fk-tanggal').value,
+          jenis_transaksi: document.getElementById('fk-jenis').value,
+          jumlah: document.getElementById('fk-jumlah').value,
+          student_id: document.getElementById('fk-student-id').value,
+          keterangan: document.getElementById('fk-keterangan').value.trim()
+        }
+      });
+      alert(res.message);
+      if (res.status === 'success') {
+        bootstrap.Modal.getInstance(document.getElementById('modalKas')).hide();
+        loadDataKas();
+      }
+    } catch (err) {
+      alert('Gagal mencatat kas.');
+    } finally {
+      btn.innerText = 'Simpan Transaksi';
+      btn.disabled = false;
+    }
+  }
+
+  async function hapusKas(id) {
+    if (!confirm('Hapus transaksi kas ini?')) return;
+    const session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
+    try {
+      const res = await postGAS({ action: 'deleteKas', kas_id: id, user_id: session.user_id });
+      alert(res.message);
+      loadDataKas();
+    } catch (e) {
+      alert('Gagal menghapus.');
+    }
+  }
+
+  loadDataKas();
+</script>

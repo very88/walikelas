@@ -1,0 +1,172 @@
+<section id="panel-bimbingan">
+  <div class="card card-kpi">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+      <div>
+        <h6 class="fw-bold mb-0 text-dark"><i class="fa-solid fa-hands-holding-child me-1 text-primary"></i> Catatan Konseling & Bimbingan Siswa</h6>
+        <small class="text-muted">Data pembimbingan pribadi bersifat rahasia (Khusus Wali Kelas)</small>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="bukaModalBimbingan()">
+        <i class="fa-solid fa-plus me-1"></i> Catat Bimbingan
+      </button>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead class="table-dark">
+          <tr>
+            <th style="width: 45px;">No</th>
+            <th>Tanggal</th>
+            <th>Nama Siswa</th>
+            <th>Topik Konseling</th>
+            <th>Hasil Diskusi / Solusi</th>
+            <th class="text-center">Status</th>
+            <th class="text-center" style="width: 80px;">Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="table-bimbingan-body">
+          <tr><td colspan="7" class="text-center text-muted py-4">Memuat data bimbingan...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- Modal Input Bimbingan -->
+<div class="modal fade" id="modalBimbingan" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-dark text-white">
+        <h6 class="modal-title fw-bold">Catat Bimbingan Siswa</h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-3">
+        <form id="form-bimbingan" onsubmit="submitFormBimbingan(event)">
+          <div class="mb-2">
+            <label class="form-label small fw-semibold">Pilih Siswa</label>
+            <select id="csl-student-id" class="form-select form-select-sm" required></select>
+          </div>
+          <div class="row g-2 mb-2">
+            <div class="col-6">
+              <label class="form-label small fw-semibold">Tanggal</label>
+              <input type="date" id="csl-tanggal" class="form-control form-control-sm" required>
+            </div>
+            <div class="col-6">
+              <label class="form-label small fw-semibold">Status Penanganan</label>
+              <select id="csl-status" class="form-select form-select-sm">
+                <option value="Dalam Proses">Dalam Proses</option>
+                <option value="Selesai">Selesai</option>
+                <option value="Rujukan Guru BK">Rujukan Guru BK</option>
+              </select>
+            </div>
+          </div>
+          <div class="mb-2">
+            <label class="form-label small fw-semibold">Topik Konseling / Permasalahan</label>
+            <input type="text" id="csl-topik" class="form-control form-control-sm" required placeholder="Contoh: Motivasi belajar menurun">
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Hasil Diskusi & Kesepakatan</label>
+            <textarea id="csl-hasil" class="form-control form-control-sm" rows="3" required placeholder="Rencana tindak lanjut..."></textarea>
+          </div>
+          <button type="submit" id="btn-save-csl" class="btn btn-primary btn-sm w-100">Simpan Catatan</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  async function loadDataBimbingan() {
+    const tbody = document.getElementById('table-bimbingan-body');
+    try {
+      const resSiswa = await postGAS({ action: 'getDataSiswa' });
+      const siswaMap = {};
+      if (resSiswa.status === 'success') {
+        const sel = document.getElementById('csl-student-id');
+        sel.innerHTML = '<option value="">-- Pilih Siswa --</option>';
+        resSiswa.data.forEach(s => {
+          siswaMap[s.student_id] = s.nama_lengkap;
+          sel.innerHTML += `<option value="${s.student_id}">${s.nama_lengkap} (${s.nis})</option>`;
+        });
+      }
+
+      const res = await postGAS({ action: 'getDataBimbingan' });
+      if (res.status === 'success') {
+        tbody.innerHTML = '';
+        if (res.data.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">Belum ada catatan bimbingan.</td></tr>';
+          return;
+        }
+        res.data.forEach((b, idx) => {
+          const tgl = (b.tanggal || '').toString().slice(0, 10);
+          tbody.innerHTML += `
+            <tr>
+              <td>${idx + 1}</td>
+              <td><small class="text-muted">${tgl}</small></td>
+              <td class="fw-semibold">${siswaMap[b.student_id] || b.student_id}</td>
+              <td>${b.topik_konseling || '-'}</td>
+              <td><small class="text-secondary">${b.hasil_diskusi || '-'}</small></td>
+              <td class="text-center"><span class="badge bg-info text-dark">${b.status_penanganan}</span></td>
+              <td class="text-center">
+                <button class="btn btn-sm btn-outline-danger" onclick="hapusBimbingan('${b.bimbingan_id}')"><i class="fa-solid fa-trash"></i></button>
+              </td>
+            </tr>
+          `;
+        });
+      }
+    } catch (e) {
+      tbody.innerHTML = '<tr><td colspan="7" class="text-danger text-center">Gagal memuat bimbingan.</td></tr>';
+    }
+  }
+
+  function bukaModalBimbingan() {
+    document.getElementById('form-bimbingan').reset();
+    document.getElementById('csl-tanggal').value = new Date().toISOString().slice(0, 10);
+    new bootstrap.Modal(document.getElementById('modalBimbingan')).show();
+  }
+
+  async function submitFormBimbingan(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btn-save-csl');
+    btn.innerText = 'Menyimpan...';
+    btn.disabled = true;
+
+    const session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
+    try {
+      const res = await postGAS({
+        action: 'saveBimbingan',
+        user_id: session.user_id,
+        payload: {
+          student_id: document.getElementById('csl-student-id').value,
+          tanggal: document.getElementById('csl-tanggal').value,
+          status_penanganan: document.getElementById('csl-status').value,
+          topik_konseling: document.getElementById('csl-topik').value.trim(),
+          hasil_diskusi: document.getElementById('csl-hasil').value.trim()
+        }
+      });
+      alert(res.message);
+      if (res.status === 'success') {
+        bootstrap.Modal.getInstance(document.getElementById('modalBimbingan')).hide();
+        loadDataBimbingan();
+      }
+    } catch (err) {
+      alert('Gagal menyimpan bimbingan.');
+    } finally {
+      btn.innerText = 'Simpan Catatan';
+      btn.disabled = false;
+    }
+  }
+
+  async function hapusBimbingan(id) {
+    if (!confirm('Hapus catatan bimbingan ini?')) return;
+    const session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
+    try {
+      const res = await postGAS({ action: 'deleteBimbingan', bimbingan_id: id, user_id: session.user_id });
+      alert(res.message);
+      loadDataBimbingan();
+    } catch (e) {
+      alert('Gagal menghapus.');
+    }
+  }
+
+  loadDataBimbingan();
+</script>

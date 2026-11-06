@@ -1,0 +1,202 @@
+<section id="panel-akademik">
+  <div class="card card-kpi">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+      <div class="d-flex align-items-center gap-2">
+        <label class="small fw-semibold text-secondary">Filter Mapel:</label>
+        <select id="filter-mapel" class="form-select form-select-sm" style="width: 180px;" onchange="filterNilai()">
+          <option value="">Semua Mapel</option>
+        </select>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="bukaModalNilai()">
+        <i class="fa-solid fa-plus me-1"></i> Input Nilai Siswa
+      </button>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead class="table-dark">
+          <tr>
+            <th style="width: 45px;">No</th>
+            <th>Nama Siswa</th>
+            <th>Mata Pelajaran</th>
+            <th>Jenis Evaluasi</th>
+            <th class="text-center">Nilai Angka</th>
+            <th class="text-center">Predikat</th>
+            <th>Catatan</th>
+            <th class="text-center" style="width: 80px;">Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="table-nilai-body">
+          <tr><td colspan="8" class="text-center text-muted py-4">Memuat data nilai...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- Modal Input Nilai -->
+<div class="modal fade" id="modalNilai" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-dark text-white">
+        <h6 class="modal-title fw-bold">Input Nilai Siswa</h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-3">
+        <form id="form-nilai" onsubmit="submitFormNilai(event)">
+          <div class="mb-2">
+            <label class="form-label small fw-semibold">Pilih Siswa</label>
+            <select id="fn-student-id" class="form-select form-select-sm" required></select>
+          </div>
+          <div class="mb-2">
+            <label class="form-label small fw-semibold">Mata Pelajaran</label>
+            <input type="text" id="fn-mapel" class="form-control form-control-sm" required placeholder="Contoh: Matematika">
+          </div>
+          <div class="row g-2 mb-2">
+            <div class="col-6">
+              <label class="form-label small fw-semibold">Jenis Evaluasi</label>
+              <select id="fn-jenis" class="form-select form-select-sm">
+                <option value="Tugas">Tugas</option>
+                <option value="Ulangan Harian">Ulangan Harian</option>
+                <option value="PTS">PTS</option>
+                <option value="PAS">PAS</option>
+              </select>
+            </div>
+            <div class="col-6">
+              <label class="form-label small fw-semibold">Nilai (0-100)</label>
+              <input type="number" id="fn-angka" class="form-control form-control-sm" min="0" max="100" required>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Catatan Kompetensi</label>
+            <textarea id="fn-catatan" class="form-control form-control-sm" rows="2" placeholder="Catatan capaian siswa..."></textarea>
+          </div>
+          <button type="submit" id="btn-save-fn" class="btn btn-primary btn-sm w-100">Simpan Nilai</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let cacheNilaiData = [];
+
+  async function loadDataNilai() {
+    const tbody = document.getElementById('table-nilai-body');
+    try {
+      const resSiswa = await postGAS({ action: 'getDataSiswa' });
+      const sMap = {};
+      if (resSiswa.status === 'success') {
+        const sel = document.getElementById('fn-student-id');
+        sel.innerHTML = '<option value="">-- Pilih Siswa --</option>';
+        resSiswa.data.forEach(s => {
+          sMap[s.student_id] = s.nama_lengkap;
+          sel.innerHTML += `<option value="${s.student_id}">${s.nama_lengkap} (${s.nis})</option>`;
+        });
+      }
+
+      const res = await postGAS({ action: 'getDataNilai' });
+      if (res.status === 'success') {
+        cacheNilaiData = res.data;
+        populateMapel(cacheNilaiData);
+        renderNilai(cacheNilaiData, sMap);
+      }
+    } catch (e) {
+      tbody.innerHTML = '<tr><td colspan="8" class="text-danger text-center">Gagal memuat nilai.</td></tr>';
+    }
+  }
+
+  function populateMapel(list) {
+    const select = document.getElementById('filter-mapel');
+    const unique = [...new Set(list.map(n => n.mata_pelajaran).filter(Boolean))];
+    let html = '<option value="">Semua Mapel</option>';
+    unique.forEach(m => html += `<option value="${m}">${m}</option>`);
+    select.innerHTML = html;
+  }
+
+  function filterNilai() {
+    const m = document.getElementById('filter-mapel').value;
+    const f = m ? cacheNilaiData.filter(n => n.mata_pelajaran === m) : cacheNilaiData;
+    loadDataNilai(); // Re-render
+  }
+
+  function renderNilai(list, sMap) {
+    const tbody = document.getElementById('table-nilai-body');
+    tbody.innerHTML = '';
+    if (list.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">Belum ada data nilai.</td></tr>';
+      return;
+    }
+    list.forEach((n, idx) => {
+      let b = 'bg-secondary';
+      if (n.predikat === 'A') b = 'bg-success';
+      else if (n.predikat === 'B') b = 'bg-primary';
+      else if (n.predikat === 'C') b = 'bg-warning text-dark';
+      else if (n.predikat === 'D') b = 'bg-danger';
+
+      tbody.innerHTML += `
+        <tr>
+          <td>${idx + 1}</td>
+          <td class="fw-semibold">${sMap[n.student_id] || n.student_id}</td>
+          <td>${n.mata_pelajaran}</td>
+          <td><span class="badge bg-light text-dark border">${n.jenis_ujian}</span></td>
+          <td class="text-center fw-bold text-primary">${n.nilai_angka}</td>
+          <td class="text-center"><span class="badge ${b}">${n.predikat}</span></td>
+          <td><small class="text-muted">${n.catatan || '-'}</small></td>
+          <td class="text-center"><button class="btn btn-sm btn-outline-danger" onclick="hapusNilai('${n.nilai_id}')"><i class="fa-solid fa-trash"></i></button></td>
+        </tr>
+      `;
+    });
+  }
+
+  function bukaModalNilai() {
+    document.getElementById('form-nilai').reset();
+    new bootstrap.Modal(document.getElementById('modalNilai')).show();
+  }
+
+  async function submitFormNilai(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btn-save-fn');
+    btn.innerText = 'Menyimpan...';
+    btn.disabled = true;
+
+    const session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
+    try {
+      const res = await postGAS({
+        action: 'saveNilai',
+        user_id: session.user_id,
+        payload: {
+          student_id: document.getElementById('fn-student-id').value,
+          mata_pelajaran: document.getElementById('fn-mapel').value.trim(),
+          jenis_ujian: document.getElementById('fn-jenis').value,
+          nilai_angka: document.getElementById('fn-angka').value,
+          catatan: document.getElementById('fn-catatan').value.trim()
+        }
+      });
+      alert(res.message);
+      if (res.status === 'success') {
+        bootstrap.Modal.getInstance(document.getElementById('modalNilai')).hide();
+        loadDataNilai();
+      }
+    } catch (err) {
+      alert('Gagal menyimpan nilai.');
+    } finally {
+      btn.innerText = 'Simpan Nilai';
+      btn.disabled = false;
+    }
+  }
+
+  async function hapusNilai(id) {
+    if (!confirm('Hapus nilai ini?')) return;
+    const session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
+    try {
+      const res = await postGAS({ action: 'deleteNilai', nilai_id: id, user_id: session.user_id });
+      alert(res.message);
+      loadDataNilai();
+    } catch (e) {
+      alert('Gagal menghapus.');
+    }
+  }
+
+  loadDataNilai();
+</script>

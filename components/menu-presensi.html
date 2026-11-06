@@ -1,0 +1,161 @@
+<section id="panel-presensi">
+  <div class="card card-kpi">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+      <div class="d-flex flex-wrap align-items-center gap-2">
+        <label class="small fw-semibold text-secondary">Tanggal Presensi:</label>
+        <input type="date" id="presensi-date" class="form-control form-control-sm" style="width: 170px;" onchange="loadPresensiMassal()">
+        <button class="btn btn-outline-secondary btn-sm" onclick="setSemuaHadir()">
+          <i class="fa-solid fa-check-double me-1 text-success"></i> Set Semua Hadir (H)
+        </button>
+      </div>
+      <div>
+        <button id="btn-save-presensi" class="btn btn-success btn-sm px-3" onclick="simpanPresensiMassal()">
+          <i class="fa-solid fa-floppy-disk me-1"></i> Simpan Presensi Massal
+        </button>
+      </div>
+    </div>
+
+    <div class="row g-2 mb-3">
+      <div class="col-6 col-md-3"><div class="p-2 border rounded bg-light text-center"><small class="text-muted d-block">Hadir (H)</small><strong id="counter-h" class="text-success fs-5">0</strong></div></div>
+      <div class="col-6 col-md-3"><div class="p-2 border rounded bg-light text-center"><small class="text-muted d-block">Sakit (S)</small><strong id="counter-s" class="text-warning fs-5">0</strong></div></div>
+      <div class="col-6 col-md-3"><div class="p-2 border rounded bg-light text-center"><small class="text-muted d-block">Izin (I)</small><strong id="counter-i" class="text-info fs-5">0</strong></div></div>
+      <div class="col-6 col-md-3"><div class="p-2 border rounded bg-light text-center"><small class="text-muted d-block">Alfa (A)</small><strong id="counter-a" class="text-danger fs-5">0</strong></div></div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-bordered align-middle">
+        <thead class="table-light">
+          <tr>
+            <th style="width: 45px;" class="text-center">No</th>
+            <th>Nama Siswa</th>
+            <th style="width: 260px;" class="text-center">Kehadiran (H / S / I / A)</th>
+            <th>Keterangan / Alasan</th>
+          </tr>
+        </thead>
+        <tbody id="table-presensi-body">
+          <tr><td colspan="4" class="text-center text-muted py-4">Memuat data presensi...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<script>
+  let cacheDaftarSiswaPres = [];
+
+  async function loadPresensiMassal() {
+    const tbody = document.getElementById('table-presensi-body');
+    const tanggal = document.getElementById('presensi-date').value;
+    tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-4">Memuat presensi siswa untuk tanggal ${tanggal}...</td></tr>`;
+
+    try {
+      if (cacheDaftarSiswaPres.length === 0) {
+        const resSiswa = await postGAS({ action: 'getDataSiswa' });
+        if (resSiswa.status === 'success') cacheDaftarSiswaPres = resSiswa.data;
+      }
+
+      if (cacheDaftarSiswaPres.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4">Belum ada siswa terdaftar.</td></tr>';
+        return;
+      }
+
+      const resPresensi = await postGAS({ action: 'getPresensiByDate', tanggal: tanggal });
+      const existingPresensi = {};
+      if (resPresensi.status === 'success' && resPresensi.data) {
+        resPresensi.data.forEach(p => {
+          existingPresensi[p.student_id] = { status: p.status_kehadiran || 'H', keterangan: p.keterangan || '' };
+        });
+      }
+
+      tbody.innerHTML = '';
+      cacheDaftarSiswaPres.forEach((siswa, index) => {
+        const current = existingPresensi[siswa.student_id] || { status: 'H', keterangan: '' };
+        const sid = siswa.student_id;
+
+        tbody.innerHTML += `
+          <tr data-student-id="${sid}">
+            <td class="text-center fw-semibold text-secondary">${index + 1}</td>
+            <td><div class="fw-semibold text-dark">${siswa.nama_lengkap}</div><small class="text-muted">NIS: ${siswa.nis || '-'}</small></td>
+            <td class="text-center">
+              <div class="btn-group btn-group-sm" role="group">
+                <input type="radio" class="btn-check" name="pres_${sid}" id="h_${sid}" value="H" ${current.status === 'H' ? 'checked' : ''} onchange="updateSummary()">
+                <label class="btn btn-outline-success" for="h_${sid}">H</label>
+                <input type="radio" class="btn-check" name="pres_${sid}" id="s_${sid}" value="S" ${current.status === 'S' ? 'checked' : ''} onchange="updateSummary()">
+                <label class="btn btn-outline-warning" for="s_${sid}">S</label>
+                <input type="radio" class="btn-check" name="pres_${sid}" id="i_${sid}" value="I" ${current.status === 'I' ? 'checked' : ''} onchange="updateSummary()">
+                <label class="btn btn-outline-info" for="i_${sid}">I</label>
+                <input type="radio" class="btn-check" name="pres_${sid}" id="a_${sid}" value="A" ${current.status === 'A' ? 'checked' : ''} onchange="updateSummary()">
+                <label class="btn btn-outline-danger" for="a_${sid}">A</label>
+              </div>
+            </td>
+            <td><input type="text" class="form-control form-control-sm presensi-ket" value="${current.keterangan}" placeholder="Keterangan opsional"></td>
+          </tr>
+        `;
+      });
+      updateSummary();
+    } catch (e) {
+      tbody.innerHTML = '<tr><td colspan="4" class="text-danger text-center">Gagal memuat presensi.</td></tr>';
+    }
+  }
+
+  function setSemuaHadir() {
+    const rows = document.querySelectorAll('#table-presensi-body tr');
+    rows.forEach(r => {
+      const sid = r.getAttribute('data-student-id');
+      if (sid) {
+        const rad = document.getElementById(`h_${sid}`);
+        if (rad) rad.checked = true;
+      }
+    });
+    updateSummary();
+  }
+
+  function updateSummary() {
+    let cH = 0, cS = 0, cI = 0, cA = 0;
+    const radios = document.querySelectorAll('#table-presensi-body input[type="radio"]:checked');
+    radios.forEach(r => {
+      if (r.value === 'H') cH++;
+      else if (r.value === 'S') cS++;
+      else if (r.value === 'I') cI++;
+      else if (r.value === 'A') cA++;
+    });
+    document.getElementById('counter-h').innerText = cH;
+    document.getElementById('counter-s').innerText = cS;
+    document.getElementById('counter-i').innerText = cI;
+    document.getElementById('counter-a').innerText = cA;
+  }
+
+  async function simpanPresensiMassal() {
+    const btn = document.getElementById('btn-save-presensi');
+    const tanggal = document.getElementById('presensi-date').value;
+    const rows = document.querySelectorAll('#table-presensi-body tr');
+    const records = [];
+
+    rows.forEach(r => {
+      const sid = r.getAttribute('data-student-id');
+      if (sid) {
+        const checked = r.querySelector(`input[name="pres_${sid}"]:checked`);
+        const ket = r.querySelector('.presensi-ket');
+        records.push({ student_id: sid, status_kehadiran: checked ? checked.value : 'H', keterangan: ket ? ket.value.trim() : '' });
+      }
+    });
+
+    if (records.length === 0) return alert('Tidak ada siswa untuk disimpan.');
+    btn.innerText = 'Menyimpan...';
+    btn.disabled = true;
+
+    const session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
+    try {
+      const res = await postGAS({ action: 'savePresensiBatch', tanggal: tanggal, records: records, user_id: session.user_id });
+      alert(res.message);
+    } catch (e) {
+      alert('Gagal menyimpan presensi.');
+    } finally {
+      btn.innerHTML = '<i class="fa-solid fa-floppy-disk me-1"></i> Simpan Presensi Massal';
+      btn.disabled = false;
+    }
+  }
+
+  document.getElementById('presensi-date').value = new Date().toISOString().slice(0, 10);
+  loadPresensiMassal();
+</script>

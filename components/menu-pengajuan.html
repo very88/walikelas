@@ -1,0 +1,173 @@
+<section id="panel-pengajuan">
+  <div class="card card-kpi">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+      <div>
+        <h6 class="fw-bold mb-0 text-dark"><i class="fa-solid fa-envelope-open-text me-1 text-primary"></i> Pengajuan Izin & Surat Sakit</h6>
+        <small class="text-muted">Pengajuan dari siswa dan persetujuan Wali Kelas</small>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="bukaModalPengajuan()">
+        <i class="fa-solid fa-paper-plane me-1"></i> Ajukan Izin / Sakit
+      </button>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead class="table-dark">
+          <tr>
+            <th style="width: 45px;">No</th>
+            <th>Nama Siswa</th>
+            <th>Jenis</th>
+            <th>Alasan / Keterangan</th>
+            <th>Rentang Tanggal</th>
+            <th class="text-center">Status</th>
+            <th class="text-center" style="width: 120px;">Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="table-pengajuan-body">
+          <tr><td colspan="7" class="text-center text-muted py-4">Memuat data pengajuan...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- Modal Ajukan Izin -->
+<div class="modal fade" id="modalPengajuan" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h6 class="modal-title fw-bold">Ajukan Izin / Sakit</h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-3">
+        <form id="form-pengajuan" onsubmit="submitFormPengajuan(event)">
+          <div class="mb-2">
+            <label class="form-label small fw-semibold">Jenis Pengajuan</label>
+            <select id="req-jenis" class="form-select form-select-sm">
+              <option value="IZIN">Izin Kepentingan Keluarga</option>
+              <option value="SAKIT">Sakit</option>
+            </select>
+          </div>
+          <div class="row g-2 mb-2">
+            <div class="col-6">
+              <label class="form-label small fw-semibold">Tanggal Mulai</label>
+              <input type="date" id="req-mulai" class="form-control form-control-sm" required>
+            </div>
+            <div class="col-6">
+              <label class="form-label small fw-semibold">Tanggal Selesai</label>
+              <input type="date" id="req-selesai" class="form-control form-control-sm" required>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Alasan Lengkap</label>
+            <textarea id="req-alasan" class="form-control form-control-sm" rows="3" required placeholder="Jelaskan alasan izin / sakit..."></textarea>
+          </div>
+          <button type="submit" id="btn-save-req" class="btn btn-primary btn-sm w-100">Kirim Pengajuan</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  async function loadDataPengajuan() {
+    const tbody = document.getElementById('table-pengajuan-body');
+    const session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
+    const isWali = (session.role === 'WALI_KELAS');
+
+    try {
+      const res = await postGAS({ action: 'getDataPengajuan' });
+      if (res.status === 'success') {
+        tbody.innerHTML = '';
+        if (res.data.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">Belum ada pengajuan izin.</td></tr>';
+          return;
+        }
+
+        res.data.forEach((p, idx) => {
+          let badge = 'bg-secondary';
+          if (p.status === 'DISETUJUI') badge = 'bg-success';
+          else if (p.status === 'DITOLAK') badge = 'bg-danger';
+          else badge = 'bg-warning text-dark';
+
+          tbody.innerHTML += `
+            <tr>
+              <td>${idx + 1}</td>
+              <td class="fw-semibold">${p.student_id}</td>
+              <td><span class="badge ${p.jenis_pengajuan === 'SAKIT' ? 'bg-warning text-dark' : 'bg-info'}">${p.jenis_pengajuan}</span></td>
+              <td><small>${p.alasan || '-'}</small></td>
+              <td><small>${p.tanggal_mulai} s/d ${p.tanggal_selesai}</small></td>
+              <td class="text-center"><span class="badge ${badge}">${p.status || 'MENUNGGU'}</span></td>
+              <td class="text-center">
+                ${isWali && p.status === 'MENUNGGU' ? `
+                  <button class="btn btn-sm btn-success py-0 px-2" onclick="ubahStatusPengajuan('${p.pengajuan_id}', 'DISETUJUI')" title="Setujui"><i class="fa-solid fa-check"></i></button>
+                  <button class="btn btn-sm btn-danger py-0 px-2" onclick="ubahStatusPengajuan('${p.pengajuan_id}', 'DITOLAK')" title="Tolak"><i class="fa-solid fa-xmark"></i></button>
+                ` : '<small class="text-muted">-</small>'}
+              </td>
+            </tr>
+          `;
+        });
+      }
+    } catch (e) {
+      tbody.innerHTML = '<tr><td colspan="7" class="text-danger text-center">Gagal memuat pengajuan.</td></tr>';
+    }
+  }
+
+  function bukaModalPengajuan() {
+    document.getElementById('form-pengajuan').reset();
+    const today = new Date().toISOString().slice(0, 10);
+    document.getElementById('req-mulai').value = today;
+    document.getElementById('req-selesai').value = today;
+    new bootstrap.Modal(document.getElementById('modalPengajuan')).show();
+  }
+
+  async function submitFormPengajuan(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btn-save-req');
+    btn.innerText = 'Mengirim...';
+    btn.disabled = true;
+
+    const session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
+    try {
+      const res = await postGAS({
+        action: 'savePengajuan',
+        user_id: session.user_id,
+        payload: {
+          student_id: session.student_id || session.username,
+          jenis_pengajuan: document.getElementById('req-jenis').value,
+          tanggal_mulai: document.getElementById('req-mulai').value,
+          tanggal_selesai: document.getElementById('req-selesai').value,
+          alasan: document.getElementById('req-alasan').value.trim()
+        }
+      });
+      alert(res.message);
+      if (res.status === 'success') {
+        bootstrap.Modal.getInstance(document.getElementById('modalPengajuan')).hide();
+        loadDataPengajuan();
+      }
+    } catch (err) {
+      alert('Gagal mengirim pengajuan.');
+    } finally {
+      btn.innerText = 'Kirim Pengajuan';
+      btn.disabled = false;
+    }
+  }
+
+  async function ubahStatusPengajuan(id, status) {
+    const session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
+    try {
+      const res = await postGAS({
+        action: 'updateStatusPengajuan',
+        pengajuan_id: id,
+        status: status,
+        user_id: session.user_id
+      });
+      alert(res.message);
+      loadDataPengajuan();
+    } catch (e) {
+      alert('Gagal memperbarui status.');
+    }
+  }
+
+  loadDataPengajuan();
+</script>
