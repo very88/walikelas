@@ -49,6 +49,7 @@
         <form id="form-siswa" onsubmit="submitFormSiswa(event)">
           <input type="hidden" id="fs-student-id">
           
+          <!-- Bagian 1: Data Identitas Siswa -->
           <h6 class="fw-bold text-primary mb-2 border-bottom pb-1 small">Identitas Siswa</h6>
           <div class="row g-2 mb-2">
             <div class="col-md-4">
@@ -69,7 +70,7 @@
           </div>
           <div class="mb-2">
             <label class="form-label small fw-semibold">Nama Lengkap Siswa</label>
-            <input type="text" id="fs-nama" class="form-control form-control-sm" required placeholder="Nama lengkap sesuai rapor/ijazah">
+            <input type="text" id="fs-nama" class="form-control form-control-sm" required placeholder="Nama lengkap sesuai rapor / ijazah">
           </div>
           <div class="row g-2 mb-2">
             <div class="col-md-6">
@@ -79,6 +80,25 @@
             <div class="col-md-6">
               <label class="form-label small fw-semibold">Tanggal Lahir</label>
               <input type="date" id="fs-tgl-lahir" class="form-control form-control-sm">
+            </div>
+          </div>
+          <div class="row g-2 mb-2">
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">Anak Ke-</label>
+              <input type="number" id="fs-anak-ke" class="form-control form-control-sm" min="1" placeholder="1">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">Dari ... Bersaudara</label>
+              <input type="number" id="fs-dari-saudara" class="form-control form-control-sm" min="1" placeholder="3">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">Status dalam Keluarga</label>
+              <select id="fs-status-keluarga" class="form-select form-select-sm">
+                <option value="Anak Kandung">Anak Kandung</option>
+                <option value="Anak Angkat">Anak Angkat</option>
+                <option value="Anak Tiri">Anak Tiri</option>
+                <option value="Lainnya">Lainnya</option>
+              </select>
             </div>
           </div>
           <div class="row g-2 mb-2">
@@ -92,30 +112,45 @@
             </div>
           </div>
           <div class="mb-3">
-            <label class="form-label small fw-semibold">Alamat Tempat Tinggal</label>
-            <textarea id="fs-alamat" class="form-control form-control-sm" rows="2" placeholder="Alamat domisili siswa..."></textarea>
+            <label class="form-label small fw-semibold">Alamat Siswa</label>
+            <textarea id="fs-alamat" class="form-control form-control-sm" rows="2" placeholder="Alamat domisili tempat tinggal siswa..."></textarea>
           </div>
 
+          <!-- Bagian 2: Data Orang Tua / Wali -->
           <h6 class="fw-bold text-primary mb-2 border-bottom pb-1 small">Data Orang Tua / Wali</h6>
           <div class="row g-2 mb-2">
             <div class="col-md-6">
               <label class="form-label small fw-semibold">Nama Ayah</label>
-              <input type="text" id="fs-ayah" class="form-control form-control-sm" placeholder="Nama ayah kandung/wali">
+              <input type="text" id="fs-ayah" class="form-control form-control-sm" placeholder="Nama ayah kandung / wali">
             </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Pekerjaan Ayah</label>
+              <input type="text" id="fs-pek-ayah" class="form-control form-control-sm" placeholder="Contoh: Petani / Guru / Wiraswasta">
+            </div>
+          </div>
+          <div class="row g-2 mb-2">
             <div class="col-md-6">
               <label class="form-label small fw-semibold">Nama Ibu</label>
               <input type="text" id="fs-ibu" class="form-control form-control-sm" placeholder="Nama ibu kandung">
             </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Pekerjaan Ibu</label>
+              <input type="text" id="fs-pek-ibu" class="form-control form-control-sm" placeholder="Contoh: Ibu Rumah Tangga / PNS">
+            </div>
           </div>
-          <div class="row g-2 mb-3">
-            <div class="col-md-6">
-              <label class="form-label small fw-semibold">No. HP / WhatsApp Orang Tua</label>
-              <input type="text" id="fs-hp-ortu" class="form-control form-control-sm" placeholder="08xxxxxxxxxx">
+          <div class="mb-2">
+            <label class="form-label small fw-semibold">No. HP / WhatsApp Orang Tua</label>
+            <input type="text" id="fs-hp-ortu" class="form-control form-control-sm" placeholder="08xxxxxxxxxx">
+          </div>
+          <div class="mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <label class="form-label small fw-semibold mb-0">Alamat Orang Tua / Wali</label>
+              <div class="form-check form-check-inline mb-0">
+                <input class="form-check-input" type="checkbox" id="fs-cek-alamat-sama" onchange="handleAlamatSama(this)">
+                <label class="form-check-label small text-muted" for="fs-cek-alamat-sama">Sama dengan alamat siswa</label>
+              </div>
             </div>
-            <div class="col-md-6">
-              <label class="form-label small fw-semibold">Pekerjaan Orang Tua</label>
-              <input type="text" id="fs-pek-ortu" class="form-control form-control-sm" placeholder="Pekerjaan orang tua">
-            </div>
+            <textarea id="fs-alamat-ortu" class="form-control form-control-sm" rows="2" placeholder="Alamat lengkap orang tua / wali..."></textarea>
           </div>
 
           <button type="submit" id="btn-save-fs" class="btn btn-primary btn-sm w-100 py-2 fw-semibold">
@@ -137,13 +172,12 @@
       </div>
       <div class="modal-body p-3">
         <p class="small text-muted mb-2">
-          Gunakan file template Excel yang telah disediakan untuk memastikan struktur header kolom sesuai dengan sistem.
+          Gunakan file template Excel terbaru untuk memastikan seluruh kolom keluarga dan orang tua terisi dengan benar.
         </p>
         <div class="mb-3">
           <label class="form-label small fw-semibold">Pilih Berkas Excel (.xlsx / .xls)</label>
           <input type="file" id="file-import-siswa" class="form-control form-control-sm" accept=".xlsx, .xls">
         </div>
-        <div id="import-preview-info" class="small text-secondary mb-3 d-none"></div>
         <button type="button" id="btn-proses-import" class="btn btn-success btn-sm w-100" onclick="prosesImportExcelSiswa()">
           Mulai Import Data
         </button>
@@ -179,17 +213,25 @@
 </div>
 
 <script>
-  let dataSiswaList = [];
+  var dataSiswaList = [];
+
+  function handleAlamatSama(chk) {
+    var txtAlamatSiswa = document.getElementById('fs-alamat').value;
+    var txtAlamatOrtu = document.getElementById('fs-alamat-ortu');
+    if (chk.checked) {
+      txtAlamatOrtu.value = txtAlamatSiswa;
+    }
+  }
 
   async function loadTabelSiswa() {
-    const tbody = document.getElementById('table-siswa-body');
+    var tbody = document.getElementById('table-siswa-body');
     try {
-      const res = await postGAS({ action: 'getDataSiswa' });
+      var res = await postGAS({ action: 'getDataSiswa' });
       if (res.status === 'success') {
         dataSiswaList = res.data || [];
         renderSiswa(dataSiswaList);
       } else {
-        tbody.innerHTML = `<tr><td colspan="7" class="text-danger text-center py-4">${res.message}</td></tr>`;
+        tbody.innerHTML = '<tr><td colspan="7" class="text-danger text-center py-4">' + res.message + '</td></tr>';
       }
     } catch (e) {
       tbody.innerHTML = '<tr><td colspan="7" class="text-danger text-center py-4">Gagal memuat data siswa.</td></tr>';
@@ -197,12 +239,12 @@
   }
 
   function renderSiswa(list) {
-    const tbody = document.getElementById('table-siswa-body');
+    var tbody = document.getElementById('table-siswa-body');
     tbody.innerHTML = '';
-    const session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
-    const isWali = (session.role === 'WALI_KELAS');
+    var session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
+    var isWali = (session.role === 'WALI_KELAS');
 
-    const actionDiv = document.getElementById('siswa-btn-actions');
+    var actionDiv = document.getElementById('siswa-btn-actions');
     if (actionDiv) actionDiv.style.display = isWali ? 'flex' : 'none';
 
     if (list.length === 0) {
@@ -210,64 +252,68 @@
       return;
     }
 
-    list.forEach((s, idx) => {
-      let rBadge = 'bg-secondary';
-      let rLabel = s.role || 'SISWA';
+    list.forEach(function(s, idx) {
+      var rBadge = 'bg-secondary';
+      var rLabel = s.role || 'SISWA';
       if (rLabel === 'KETUA_KELAS') { rBadge = 'bg-primary'; rLabel = 'Ketua'; }
       else if (rLabel === 'SEKRETARIS') { rBadge = 'bg-info text-dark'; rLabel = 'Sekretaris'; }
       else if (rLabel === 'BENDAHARA') { rBadge = 'bg-success'; rLabel = 'Bendahara'; }
       else { rLabel = 'Anggota'; }
 
-      tbody.innerHTML += `
-        <tr>
-          <td>${idx + 1}</td>
-          <td class="fw-semibold">${s.nis || '-'}</td>
-          <td>${s.nama_lengkap || '-'}</td>
-          <td><span class="badge ${s.jenis_kelamin === 'L' ? 'bg-primary' : 'bg-danger'}">${s.jenis_kelamin || '-'}</span></td>
-          <td><span class="badge ${rBadge}">${rLabel}</span></td>
-          <td>${s.no_hp || '-'}</td>
-          <td class="text-center">
-            ${isWali ? `
-              <button class="btn btn-sm btn-outline-warning py-0 px-2 me-1" onclick="resetPasswordSiswa('${s.student_id}', '${s.nama_lengkap}', '${s.nis}')" title="Reset Password ke siswa123">
-                <i class="fa-solid fa-key"></i>
-              </button>
-              <button class="btn btn-sm btn-outline-primary py-0 px-2 me-1" onclick="bukaModalEditSiswa('${s.student_id}')" title="Edit Data Siswa">
-                <i class="fa-solid fa-pen-to-square"></i>
-              </button>
-              <button class="btn btn-sm btn-outline-secondary py-0 px-2 me-1" onclick="bukaModalRole('${s.student_id}', '${s.nama_lengkap}', '${s.role || 'SISWA'}')" title="Ubah Jabatan Pengurus">
-                <i class="fa-solid fa-user-shield"></i>
-              </button>
-              <button class="btn btn-sm btn-outline-danger py-0 px-2" onclick="hapusSiswa('${s.student_id}', '${s.nama_lengkap}')" title="Hapus Siswa">
-                <i class="fa-solid fa-trash"></i>
-              </button>
-            ` : '<span class="text-muted small">View Only</span>'}
-          </td>
-        </tr>
-      `;
+      var htmlRow = '' +
+        '<tr>' +
+          '<td>' + (idx + 1) + '</td>' +
+          '<td class="fw-semibold">' + (s.nis || '-') + '</td>' +
+          '<td>' + (s.nama_lengkap || '-') + '</td>' +
+          '<td><span class="badge ' + (s.jenis_kelamin === 'L' ? 'bg-primary' : 'bg-danger') + '">' + (s.jenis_kelamin || '-') + '</span></td>' +
+          '<td><span class="badge ' + rBadge + '">' + rLabel + '</span></td>' +
+          '<td>' + (s.no_hp || '-') + '</td>' +
+          '<td class="text-center">';
+
+      if (isWali) {
+        htmlRow += '' +
+          '<button class="btn btn-sm btn-outline-warning py-0 px-2 me-1" onclick="resetPasswordSiswa(\'' + s.student_id + '\', \'' + s.nama_lengkap + '\', \'' + s.nis + '\')" title="Reset Password">' +
+            '<i class="fa-solid fa-key"></i>' +
+          '</button>' +
+          '<button class="btn btn-sm btn-outline-primary py-0 px-2 me-1" onclick="bukaModalEditSiswa(\'' + s.student_id + '\')" title="Edit Data">' +
+            '<i class="fa-solid fa-pen-to-square"></i>' +
+          '</button>' +
+          '<button class="btn btn-sm btn-outline-secondary py-0 px-2 me-1" onclick="bukaModalRole(\'' + s.student_id + '\', \'' + s.nama_lengkap + '\', \'' + (s.role || 'SISWA') + '\')" title="Ubah Jabatan">' +
+            '<i class="fa-solid fa-user-shield"></i>' +
+          '</button>' +
+          '<button class="btn btn-sm btn-outline-danger py-0 px-2" onclick="hapusSiswa(\'' + s.student_id + '\', \'' + s.nama_lengkap + '\')" title="Hapus">' +
+            '<i class="fa-solid fa-trash"></i>' +
+          '</button>';
+      } else {
+        htmlRow += '<span class="text-muted small">View Only</span>';
+      }
+
+      htmlRow += '</td></tr>';
+      tbody.innerHTML += htmlRow;
     });
   }
 
   function filterSiswa() {
-    const q = document.getElementById('cari-siswa').value.toLowerCase();
-    const g = document.getElementById('filter-jk').value;
-    const filtered = dataSiswaList.filter(s => {
-      const matchQ = (s.nama_lengkap || '').toLowerCase().includes(q) || (s.nis || '').toString().includes(q);
-      const matchG = g ? (s.jenis_kelamin === g) : true;
+    var q = document.getElementById('cari-siswa').value.toLowerCase();
+    var g = document.getElementById('filter-jk').value;
+    var filtered = dataSiswaList.filter(function(s) {
+      var matchQ = (s.nama_lengkap || '').toLowerCase().includes(q) || (s.nis || '').toString().includes(q);
+      var matchG = g ? (s.jenis_kelamin === g) : true;
       return matchQ && matchG;
     });
     renderSiswa(filtered);
   }
 
-  // MODAL TAMBAH & EDIT SISWA
   function bukaModalTambahSiswa() {
     document.getElementById('form-siswa').reset();
     document.getElementById('fs-student-id').value = '';
+    document.getElementById('fs-cek-alamat-sama').checked = false;
     document.getElementById('modal-siswa-title').innerHTML = '<i class="fa-solid fa-user-plus me-2"></i>Tambah Data Siswa';
     new bootstrap.Modal(document.getElementById('modalTambahSiswa')).show();
   }
 
   function bukaModalEditSiswa(studentId) {
-    const s = dataSiswaList.find(x => x.student_id === studentId);
+    var s = dataSiswaList.find(function(x) { return x.student_id === studentId; });
     if (!s) return;
 
     document.getElementById('form-siswa').reset();
@@ -278,13 +324,25 @@
     document.getElementById('fs-nama').value = s.nama_lengkap || '';
     document.getElementById('fs-tempat-lahir').value = s.tempat_lahir || '';
     document.getElementById('fs-tgl-lahir').value = (s.tanggal_lahir || '').toString().slice(0, 10);
+    document.getElementById('fs-anak-ke').value = s.anak_ke || '';
+    document.getElementById('fs-dari-saudara').value = s.dari_saudara || '';
+    document.getElementById('fs-status-keluarga').value = s.status_dalam_keluarga || 'Anak Kandung';
     document.getElementById('fs-hp').value = s.no_hp || '';
     document.getElementById('fs-email').value = s.email || '';
     document.getElementById('fs-alamat').value = s.alamat || '';
+    
     document.getElementById('fs-ayah').value = s.nama_ayah || '';
+    document.getElementById('fs-pek-ayah').value = s.pekerjaan_ayah || '';
     document.getElementById('fs-ibu').value = s.nama_ibu || '';
+    document.getElementById('fs-pek-ibu').value = s.pekerjaan_ibu || '';
     document.getElementById('fs-hp-ortu').value = s.no_hp_ortu || '';
-    document.getElementById('fs-pek-ortu').value = s.pekerjaan_ayah || '';
+    document.getElementById('fs-alamat-ortu').value = s.alamat_ortu || '';
+
+    if (s.alamat && s.alamat_ortu && s.alamat === s.alamat_ortu) {
+      document.getElementById('fs-cek-alamat-sama').checked = true;
+    } else {
+      document.getElementById('fs-cek-alamat-sama').checked = false;
+    }
 
     document.getElementById('modal-siswa-title').innerHTML = '<i class="fa-solid fa-pen-to-square me-2"></i>Edit Data Siswa';
     new bootstrap.Modal(document.getElementById('modalTambahSiswa')).show();
@@ -292,12 +350,12 @@
 
   async function submitFormSiswa(e) {
     e.preventDefault();
-    const btn = document.getElementById('btn-save-fs');
+    var btn = document.getElementById('btn-save-fs');
     btn.innerText = 'Menyimpan...';
     btn.disabled = true;
 
-    const session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
-    const payloadData = {
+    var session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
+    var payloadData = {
       student_id: document.getElementById('fs-student-id').value,
       nis: document.getElementById('fs-nis').value.trim(),
       nisn: document.getElementById('fs-nisn').value.trim(),
@@ -305,17 +363,22 @@
       jenis_kelamin: document.getElementById('fs-jk').value,
       tempat_lahir: document.getElementById('fs-tempat-lahir').value.trim(),
       tanggal_lahir: document.getElementById('fs-tgl-lahir').value,
+      anak_ke: document.getElementById('fs-anak-ke').value,
+      dari_saudara: document.getElementById('fs-dari-saudara').value,
+      status_dalam_keluarga: document.getElementById('fs-status-keluarga').value,
       no_hp: document.getElementById('fs-hp').value.trim(),
       email: document.getElementById('fs-email').value.trim(),
       alamat: document.getElementById('fs-alamat').value.trim(),
       nama_ayah: document.getElementById('fs-ayah').value.trim(),
+      pekerjaan_ayah: document.getElementById('fs-pek-ayah').value.trim(),
       nama_ibu: document.getElementById('fs-ibu').value.trim(),
+      pekerjaan_ibu: document.getElementById('fs-pek-ibu').value.trim(),
       no_hp_ortu: document.getElementById('fs-hp-ortu').value.trim(),
-      pekerjaan_ayah: document.getElementById('fs-pek-ortu').value.trim()
+      alamat_ortu: document.getElementById('fs-alamat-ortu').value.trim()
     };
 
     try {
-      const res = await postGAS({
+      var res = await postGAS({
         action: 'saveSiswa',
         user_id: session.user_id,
         payload: payloadData
@@ -334,14 +397,14 @@
     }
   }
 
-  // DOWNLOAD TEMPLATE EXCEL
+  // DOWNLOAD TEMPLATE EXCEL LENGKAP
   function downloadTemplateSiswa() {
     if (typeof XLSX === 'undefined') {
-      alert('Library SheetJS belum siap. Muat ulang halaman.');
+      alert('Library SheetJS belum siap. Silakan muat ulang halaman.');
       return;
     }
 
-    const templateHeaders = [
+    var templateHeaders = [
       {
         nis: "3567",
         nisn: "0081234567",
@@ -349,52 +412,52 @@
         jenis_kelamin: "L",
         tempat_lahir: "Banyuwangi",
         tanggal_lahir: "2008-05-14",
-        alamat: "Jl. Raya Wongsorejo No. 12",
+        anak_ke: 1,
+        dari_saudara: 3,
+        status_dalam_keluarga: "Anak Kandung",
         no_hp: "081234567890",
         email: "ahmad@gmail.com",
+        alamat: "Jl. Raya Wongsorejo No. 12",
         nama_ayah: "Budi Santoso",
-        nama_ibu: "Siti Aminah",
         pekerjaan_ayah: "Wiraswasta",
+        nama_ibu: "Siti Aminah",
+        pekerjaan_ibu: "Ibu Rumah Tangga",
         no_hp_ortu: "081987654321",
         alamat_ortu: "Jl. Raya Wongsorejo No. 12"
       }
     ];
 
-    const worksheet = XLSX.utils.json_to_sheet(templateHeaders);
-    const workbook = XLSX.utils.book_new();
+    var worksheet = XLSX.utils.json_to_sheet(templateHeaders);
+    var workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "DATA_SISWA");
     XLSX.writeFile(workbook, "Template_Import_Siswa_SIMKEL.xlsx");
   }
 
-  // IMPORT EXCEL
   function bukaModalImportSiswa() {
     document.getElementById('file-import-siswa').value = '';
-    const info = document.getElementById('import-preview-info');
-    info.classList.add('d-none');
-    info.innerHTML = '';
     new bootstrap.Modal(document.getElementById('modalImportSiswa')).show();
   }
 
   function prosesImportExcelSiswa() {
-    const fileInput = document.getElementById('file-import-siswa');
+    var fileInput = document.getElementById('file-import-siswa');
     if (!fileInput.files || fileInput.files.length === 0) {
       alert('Pilih berkas Excel (.xlsx / .xls) terlebih dahulu.');
       return;
     }
 
-    const file = fileInput.files[0];
-    const reader = new FileReader();
-    const btn = document.getElementById('btn-proses-import');
+    var file = fileInput.files[0];
+    var reader = new FileReader();
+    var btn = document.getElementById('btn-proses-import');
 
     btn.innerText = 'Membaca Berkas...';
     btn.disabled = true;
 
     reader.onload = async function(e) {
       try {
-        const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, { type: 'array' });
-        const sheetName = workbook.SheetNames[0];
-        const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+        var data = new Uint8Array(e.target.result);
+        var workbook = XLSX.read(data, { type: 'array' });
+        var sheetName = workbook.SheetNames[0];
+        var rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
 
         if (rows.length === 0) {
           alert('Berkas Excel kosong atau format tidak sesuai.');
@@ -403,10 +466,10 @@
           return;
         }
 
-        btn.innerText = `Mengimpor ${rows.length} Siswa...`;
-        const session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
+        btn.innerText = 'Mengimpor ' + rows.length + ' Siswa...';
+        var session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
 
-        const res = await postGAS({
+        var res = await postGAS({
           action: 'importSiswaBatch',
           user_id: session.user_id,
           rows: rows
@@ -428,12 +491,11 @@
     reader.readAsArrayBuffer(file);
   }
 
-  // RESET PASSWORD
   async function resetPasswordSiswa(studentId, nama, nis) {
-    if (!confirm(`Reset password untuk siswa ${nama} (NIS: ${nis}) menjadi "siswa123"?`)) return;
-    const session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
+    if (!confirm('Reset password untuk siswa ' + nama + ' (NIS: ' + nis + ') menjadi "siswa123"?')) return;
+    var session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
     try {
-      const res = await postGAS({
+      var res = await postGAS({
         action: 'resetPasswordSiswa',
         student_id: studentId,
         user_id: session.user_id
@@ -444,7 +506,6 @@
     }
   }
 
-  // JABATAN PENGURUS
   function bukaModalRole(studentId, nama, currentRole) {
     document.getElementById('fr-student-id').value = studentId;
     document.getElementById('fr-nama-siswa').innerText = nama;
@@ -453,9 +514,9 @@
   }
 
   async function simpanRolePengurus() {
-    const session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
+    var session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
     try {
-      const res = await postGAS({
+      var res = await postGAS({
         action: 'setRolePengurus',
         student_id: document.getElementById('fr-student-id').value,
         role: document.getElementById('fr-role').value,
@@ -469,12 +530,11 @@
     }
   }
 
-  // HAPUS SISWA
   async function hapusSiswa(studentId, nama) {
     if (!confirm('Hapus siswa ' + nama + '?')) return;
-    const session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
+    var session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
     try {
-      const res = await postGAS({ action: 'deleteSiswa', student_id: studentId, user_id: session.user_id });
+      var res = await postGAS({ action: 'deleteSiswa', student_id: studentId, user_id: session.user_id });
       alert(res.message);
       loadTabelSiswa();
     } catch (e) {
