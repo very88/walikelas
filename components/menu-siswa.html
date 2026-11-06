@@ -37,12 +37,12 @@
   </div>
 </section>
 
-<!-- ================= MODAL STUDENT 360° (PROFIL LENGKAP SISWA) ================= -->
+<!-- MODAL STUDENT 360 -->
 <div class="modal fade" id="modalStudent360" tabindex="-1">
   <div class="modal-dialog modal-lg modal-dialog-scrollable">
     <div class="modal-content">
       <div class="modal-header bg-primary text-white">
-        <h6 class="modal-title fw-bold"><i class="fa-solid fa-id-card-clip me-2"></i>Student 360° - Profil Komprehensif Siswa</h6>
+        <h6 class="modal-title fw-bold"><i class="fa-solid fa-id-card-clip me-2"></i>Student 360 - Profil Siswa</h6>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body p-3" id="student-360-content">
@@ -55,7 +55,7 @@
   </div>
 </div>
 
-<!-- ================= MODAL TAMBAH / EDIT SISWA ================= -->
+<!-- MODAL TAMBAH / EDIT SISWA -->
 <div class="modal fade" id="modalTambahSiswa" tabindex="-1">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
@@ -67,7 +67,6 @@
         <form id="form-siswa" onsubmit="submitFormSiswa(event)">
           <input type="hidden" id="fs-student-id">
           
-          <!-- Identitas Siswa -->
           <h6 class="fw-bold text-primary mb-2 border-bottom pb-1 small">Identitas Siswa</h6>
           <div class="row g-2 mb-2">
             <div class="col-md-4">
@@ -88,7 +87,7 @@
           </div>
           <div class="mb-2">
             <label class="form-label small fw-semibold">Nama Lengkap Siswa</label>
-            <input type="text" id="fs-nama" class="form-control form-control-sm" required placeholder="Nama lengkap sesuai ijazah/rapor">
+            <input type="text" id="fs-nama" class="form-control form-control-sm" required placeholder="Nama lengkap">
           </div>
           <div class="row g-2 mb-2">
             <div class="col-md-6">
@@ -131,44 +130,43 @@
           </div>
           <div class="mb-3">
             <label class="form-label small fw-semibold">Alamat Siswa</label>
-            <textarea id="fs-alamat" class="form-control form-control-sm" rows="2" placeholder="Alamat domisili tempat tinggal siswa..."></textarea>
+            <textarea id="fs-alamat" class="form-control form-control-sm" rows="2" placeholder="Alamat siswa..."></textarea>
           </div>
 
-          <!-- Data Orang Tua / Wali -->
           <h6 class="fw-bold text-primary mb-2 border-bottom pb-1 small">Data Orang Tua / Wali</h6>
           <div class="row g-2 mb-2">
             <div class="col-md-6">
               <label class="form-label small fw-semibold">Nama Ayah</label>
-              <input type="text" id="fs-ayah" class="form-control form-control-sm" placeholder="Nama ayah kandung / wali">
+              <input type="text" id="fs-ayah" class="form-control form-control-sm" placeholder="Nama ayah">
             </div>
             <div class="col-md-6">
               <label class="form-label small fw-semibold">Pekerjaan Ayah</label>
-              <input type="text" id="fs-pek-ayah" class="form-control form-control-sm" placeholder="Contoh: Petani / Guru / Wiraswasta">
+              <input type="text" id="fs-pek-ayah" class="form-control form-control-sm" placeholder="Pekerjaan ayah">
             </div>
           </div>
           <div class="row g-2 mb-2">
             <div class="col-md-6">
               <label class="form-label small fw-semibold">Nama Ibu</label>
-              <input type="text" id="fs-ibu" class="form-control form-control-sm" placeholder="Nama ibu kandung">
+              <input type="text" id="fs-ibu" class="form-control form-control-sm" placeholder="Nama ibu">
             </div>
             <div class="col-md-6">
               <label class="form-label small fw-semibold">Pekerjaan Ibu</label>
-              <input type="text" id="fs-pek-ibu" class="form-control form-control-sm" placeholder="Contoh: Ibu Rumah Tangga / PNS">
+              <input type="text" id="fs-pek-ibu" class="form-control form-control-sm" placeholder="Pekerjaan ibu">
             </div>
           </div>
           <div class="mb-2">
-            <label class="form-label small fw-semibold">No. HP / WhatsApp Orang Tua</label>
+            <label class="form-label small fw-semibold">No. HP Orang Tua</label>
             <input type="text" id="fs-hp-ortu" class="form-control form-control-sm" placeholder="08xxxxxxxxxx">
           </div>
           <div class="mb-3">
             <div class="d-flex justify-content-between align-items-center mb-1">
-              <label class="form-label small fw-semibold mb-0">Alamat Orang Tua / Wali</label>
+              <label class="form-label small fw-semibold mb-0">Alamat Orang Tua</label>
               <div class="form-check form-check-inline mb-0">
                 <input class="form-check-input" type="checkbox" id="fs-cek-alamat-sama" onchange="handleAlamatSama(this)">
                 <label class="form-check-label small text-muted" for="fs-cek-alamat-sama">Sama dengan alamat siswa</label>
               </div>
             </div>
-            <textarea id="fs-alamat-ortu" class="form-control form-control-sm" rows="2" placeholder="Alamat lengkap orang tua / wali..."></textarea>
+            <textarea id="fs-alamat-ortu" class="form-control form-control-sm" rows="2" placeholder="Alamat orang tua..."></textarea>
           </div>
 
           <button type="submit" id="btn-save-fs" class="btn btn-primary btn-sm w-100 py-2 fw-semibold">
@@ -180,7 +178,7 @@
   </div>
 </div>
 
-<!-- Modal Import Siswa via Excel -->
+<!-- MODAL IMPORT EXCEL -->
 <div class="modal fade" id="modalImportSiswa" tabindex="-1">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -190,7 +188,7 @@
       </div>
       <div class="modal-body p-3">
         <p class="small text-muted mb-2">
-          Gunakan template Excel resmi untuk memastikan data identitas dan keluarga terimpor secara presisi.
+          Gunakan template Excel resmi agar kolom data keluarga terpetakan sesuai format.
         </p>
         <div class="mb-3">
           <label class="form-label small fw-semibold">Pilih Berkas Excel (.xlsx / .xls)</label>
@@ -204,7 +202,7 @@
   </div>
 </div>
 
-<!-- Modal Set Role Pengurus -->
+<!-- MODAL SET ROLE -->
 <div class="modal fade" id="modalRolePengurus" tabindex="-1">
   <div class="modal-dialog modal-sm">
     <div class="modal-content">
@@ -287,7 +285,7 @@
           '<td><span class="badge ' + rBadge + '">' + rLabel + '</span></td>' +
           '<td>' + (s.no_hp || '-') + '</td>' +
           '<td class="text-center">' +
-            '<button class="btn btn-sm btn-outline-info py-0 px-2 me-1" onclick="bukaStudent360(\'' + s.student_id + '\')" title="Lihat Profil Lengkap Student 360°">' +
+            '<button class="btn btn-sm btn-outline-info py-0 px-2 me-1" onclick="bukaStudent360(\'' + s.student_id + '\')" title="Lihat Profil Student 360">' +
               '<i class="fa-solid fa-address-card"></i>' +
             '</button>';
 
@@ -312,7 +310,6 @@
     });
   }
 
-  // ================= BUKA STUDENT 360° DENGAN TAMPILAN KELUARGA LENGKAP =================
   async function bukaStudent360(studentId) {
     var modalEl = document.getElementById('modalStudent360');
     var contentEl = document.getElementById('student-360-content');
@@ -352,8 +349,8 @@
           '<div class="row g-2 mb-3 text-center">' +
             '<div class="col-3"><div class="p-2 border rounded bg-white"><small class="text-muted d-block">Kehadiran</small><strong class="text-success fs-5">' + persenHadir + '%</strong><small class="d-block text-muted">(' + pres.H + ' Hadir)</small></div></div>' +
             '<div class="col-3"><div class="p-2 border rounded bg-white"><small class="text-muted d-block">Sakit / Izin</small><strong class="text-warning fs-5">' + (pres.S + pres.I) + '</strong><small class="d-block text-muted">(S:' + pres.S + ' | I:' + pres.I + ')</small></div></div>' +
-            '<div class="col-3"><div class="p-2 border rounded bg-white"><small class="text-muted d-block">Alfa (Tanpa Ket.)</small><strong class="text-danger fs-5">' + pres.A + '</strong><small class="d-block text-muted">Hari</small></div></div>' +
-            '<div class="col-3"><div class="p-2 border rounded bg-white"><small class="text-muted d-block">Poin Disiplin</small><strong class="text-primary fs-5">' + d.total_poin + '</strong><small class="d-block text-muted">Poin EWS</small></div></div>' +
+            '<div class="col-3"><div class="p-2 border rounded bg-white"><small class="text-muted d-block">Alfa</small><strong class="text-danger fs-5">' + pres.A + '</strong><small class="d-block text-muted">Hari</small></div></div>' +
+            '<div class="col-3"><div class="p-2 border rounded bg-white"><small class="text-muted d-block">Poin EWS</small><strong class="text-primary fs-5">' + d.total_poin + '</strong><small class="d-block text-muted">Poin</small></div></div>' +
           '</div>' +
 
           '<div class="row g-3">' +
@@ -390,7 +387,7 @@
         contentEl.innerHTML = '<div class="alert alert-danger py-2 small">' + res.message + '</div>';
       }
     } catch (err) {
-      contentEl.innerHTML = '<div class="alert alert-danger py-2 small">Gagal memuat rincian Student 360°.</div>';
+      contentEl.innerHTML = '<div class="alert alert-danger py-2 small">Gagal memuat rincian Student 360.</div>';
     }
   }
 
@@ -500,7 +497,7 @@
 
   function downloadTemplateSiswa() {
     if (typeof XLSX === 'undefined') {
-      alert('Library SheetJS belum siap. Silakan muat ulang halaman.');
+      alert('Library SheetJS belum siap.');
       return;
     }
 
