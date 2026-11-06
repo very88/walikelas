@@ -2,160 +2,316 @@
   <div class="card card-kpi">
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
       <div class="d-flex flex-wrap align-items-center gap-2">
-        <label class="small fw-semibold text-secondary">Tanggal Presensi:</label>
-        <input type="date" id="presensi-date" class="form-control form-control-sm" style="width: 170px;" onchange="loadPresensiMassal()">
+        <label class="small fw-semibold text-secondary">Tanggal:</label>
+        <input type="date" id="presensi-date" class="form-control form-control-sm" style="width: 150px;" onchange="loadPresensiMassal()">
         <button class="btn btn-outline-secondary btn-sm" onclick="setSemuaHadir()">
-          <i class="fa-solid fa-check-double me-1 text-success"></i> Set Semua Hadir (H)
+          <i class="fa-solid fa-check-double me-1 text-success"></i> Set Semua Hadir
         </button>
       </div>
-      <div>
+      <div class="d-flex gap-2" id="presensi-action-buttons">
+        <button class="btn btn-outline-success btn-sm" onclick="downloadTemplatePresensi()">
+          <i class="fa-solid fa-download me-1"></i> Template Excel
+        </button>
+        <button class="btn btn-outline-primary btn-sm" onclick="bukaModalImportPresensi()">
+          <i class="fa-solid fa-file-import me-1"></i> Import Excel
+        </button>
         <button id="btn-save-presensi" class="btn btn-success btn-sm px-3" onclick="simpanPresensiMassal()">
-          <i class="fa-solid fa-floppy-disk me-1"></i> Simpan Presensi Massal
+          <i class="fa-solid fa-floppy-disk me-1"></i> Simpan Presensi
         </button>
       </div>
     </div>
 
-    <div class="row g-2 mb-3">
-      <div class="col-6 col-md-3"><div class="p-2 border rounded bg-light text-center"><small class="text-muted d-block">Hadir (H)</small><strong id="counter-h" class="text-success fs-5">0</strong></div></div>
-      <div class="col-6 col-md-3"><div class="p-2 border rounded bg-light text-center"><small class="text-muted d-block">Sakit (S)</small><strong id="counter-s" class="text-warning fs-5">0</strong></div></div>
-      <div class="col-6 col-md-3"><div class="p-2 border rounded bg-light text-center"><small class="text-muted d-block">Izin (I)</small><strong id="counter-i" class="text-info fs-5">0</strong></div></div>
-      <div class="col-6 col-md-3"><div class="p-2 border rounded bg-light text-center"><small class="text-muted d-block">Alfa (A)</small><strong id="counter-a" class="text-danger fs-5">0</strong></div></div>
+    <!-- Ringkasan Angka Cepat Hari Ini -->
+    <div class="row g-2 mb-3 text-center small">
+      <div class="col-3"><div class="p-2 border rounded bg-success-subtle text-success fw-bold">Hadir: <span id="count-h">0</span></div></div>
+      <div class="col-3"><div class="p-2 border rounded bg-warning-subtle text-warning-emphasis fw-bold">Sakit: <span id="count-s">0</span></div></div>
+      <div class="col-3"><div class="p-2 border rounded bg-info-subtle text-info fw-bold">Izin: <span id="count-i">0</span></div></div>
+      <div class="col-3"><div class="p-2 border rounded bg-danger-subtle text-danger fw-bold">Alfa: <span id="count-a">0</span></div></div>
     </div>
 
     <div class="table-responsive">
-      <table class="table table-bordered align-middle">
-        <thead class="table-light">
+      <table class="table table-bordered table-hover align-middle">
+        <thead class="table-dark">
           <tr>
             <th style="width: 45px;" class="text-center">No</th>
+            <th>NIS</th>
             <th>Nama Siswa</th>
-            <th style="width: 260px;" class="text-center">Kehadiran (H / S / I / A)</th>
-            <th>Keterangan / Alasan</th>
+            <th style="width: 260px;" class="text-center">Status Kehadiran</th>
+            <th>Keterangan Tambahan</th>
           </tr>
         </thead>
         <tbody id="table-presensi-body">
-          <tr><td colspan="4" class="text-center text-muted py-4">Memuat data presensi...</td></tr>
+          <tr><td colspan="5" class="text-center text-muted py-4"><div class="spinner-border spinner-border-sm text-primary me-2"></div>Memuat data siswa...</td></tr>
         </tbody>
       </table>
     </div>
   </div>
 </section>
 
+<!-- Modal Import Presensi Excel -->
+<div class="modal fade" id="modalImportPresensi" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h6 class="modal-title fw-bold"><i class="fa-solid fa-file-import me-2"></i>Import Presensi via Excel</h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-3">
+        <p class="small text-muted mb-2">
+          Format kolom wajib: <code>nis</code>, <code>tanggal</code> (YYYY-MM-DD), <code>status_kehadiran</code> (H / S / I / A), dan <code>keterangan</code>.
+        </p>
+        <div class="mb-3">
+          <label class="form-label small fw-semibold">Pilih Berkas Excel (.xlsx / .xls)</label>
+          <input type="file" id="file-import-presensi" class="form-control form-control-sm" accept=".xlsx, .xls">
+        </div>
+        <button type="button" id="btn-proses-import-pres" class="btn btn-success btn-sm w-100" onclick="prosesImportExcelPresensi()">
+          Mulai Import Presensi
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
-  let cacheDaftarSiswaPres = [];
+  let cacheDaftarSiswaPresensi = [];
+
+  async function initPresensi() {
+    const inputTgl = document.getElementById('presensi-date');
+    if (!inputTgl.value) {
+      inputTgl.value = new Date().toISOString().slice(0, 10);
+    }
+
+    const session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
+    const role = session.role || 'SISWA';
+    const isWali = (role === 'WALI_KELAS');
+    const isBendahara = (role === 'BENDAHARA' || isWali);
+    const isPengurus = (role === 'KETUA_KELAS' || role === 'SEKRETARIS' || isBendahara);
+
+    const btnActions = document.getElementById('presensi-action-buttons');
+    if (btnActions) btnActions.style.display = isPengurus ? 'flex' : 'none';
+
+    await loadPresensiMassal();
+  }
 
   async function loadPresensiMassal() {
     const tbody = document.getElementById('table-presensi-body');
     const tanggal = document.getElementById('presensi-date').value;
-    tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-4">Memuat presensi siswa untuk tanggal ${tanggal}...</td></tr>`;
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4"><div class="spinner-border spinner-border-sm text-primary me-2"></div>Memuat data...</td></tr>';
 
     try {
-      if (cacheDaftarSiswaPres.length === 0) {
-        const resSiswa = await postGAS({ action: 'getDataSiswa' });
-        if (resSiswa.status === 'success') cacheDaftarSiswaPres = resSiswa.data;
+      if (cacheDaftarSiswaPresensi.length === 0) {
+        const resS = await postGAS({ action: 'getDataSiswa' });
+        if (resS.status === 'success') {
+          cacheDaftarSiswaPresensi = resS.data || [];
+        }
       }
 
-      if (cacheDaftarSiswaPres.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4">Belum ada siswa terdaftar.</td></tr>';
+      if (cacheDaftarSiswaPresensi.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">Belum ada siswa terdaftar. Silakan input siswa terlebih dahulu.</td></tr>';
         return;
       }
 
-      const resPresensi = await postGAS({ action: 'getPresensiByDate', tanggal: tanggal });
-      const existingPresensi = {};
-      if (resPresensi.status === 'success' && resPresensi.data) {
-        resPresensi.data.forEach(p => {
-          existingPresensi[p.student_id] = { status: p.status_kehadiran || 'H', keterangan: p.keterangan || '' };
+      const resP = await postGAS({ action: 'getPresensiByDate', tanggal: tanggal });
+      const existMap = {};
+      const ketMap = {};
+      if (resP.status === 'success' && resP.data) {
+        resP.data.forEach(p => {
+          existMap[p.student_id] = p.status_kehadiran || 'H';
+          ketMap[p.student_id] = p.keterangan || '';
         });
       }
 
       tbody.innerHTML = '';
-      cacheDaftarSiswaPres.forEach((siswa, index) => {
-        const current = existingPresensi[siswa.student_id] || { status: 'H', keterangan: '' };
-        const sid = siswa.student_id;
+      cacheDaftarSiswaPresensi.forEach((s, idx) => {
+        const sid = s.student_id;
+        const cur = existMap[sid] || 'H';
+        const ket = ketMap[sid] || '';
 
         tbody.innerHTML += `
           <tr data-student-id="${sid}">
-            <td class="text-center fw-semibold text-secondary">${index + 1}</td>
-            <td><div class="fw-semibold text-dark">${siswa.nama_lengkap}</div><small class="text-muted">NIS: ${siswa.nis || '-'}</small></td>
+            <td class="text-center">${idx + 1}</td>
+            <td class="fw-semibold text-muted small">${s.nis || '-'}</td>
+            <td class="fw-semibold text-dark">${s.nama_lengkap}</td>
             <td class="text-center">
-              <div class="btn-group btn-group-sm" role="group">
-                <input type="radio" class="btn-check" name="pres_${sid}" id="h_${sid}" value="H" ${current.status === 'H' ? 'checked' : ''} onchange="updateSummary()">
+              <div class="btn-group btn-group-sm w-100" role="group">
+                <input type="radio" class="btn-check" name="pres_${sid}" id="h_${sid}" value="H" ${cur === 'H' ? 'checked' : ''} onchange="updateSummaryAngka()">
                 <label class="btn btn-outline-success" for="h_${sid}">H</label>
-                <input type="radio" class="btn-check" name="pres_${sid}" id="s_${sid}" value="S" ${current.status === 'S' ? 'checked' : ''} onchange="updateSummary()">
+
+                <input type="radio" class="btn-check" name="pres_${sid}" id="s_${sid}" value="S" ${cur === 'S' ? 'checked' : ''} onchange="updateSummaryAngka()">
                 <label class="btn btn-outline-warning" for="s_${sid}">S</label>
-                <input type="radio" class="btn-check" name="pres_${sid}" id="i_${sid}" value="I" ${current.status === 'I' ? 'checked' : ''} onchange="updateSummary()">
+
+                <input type="radio" class="btn-check" name="pres_${sid}" id="i_${sid}" value="I" ${cur === 'I' ? 'checked' : ''} onchange="updateSummaryAngka()">
                 <label class="btn btn-outline-info" for="i_${sid}">I</label>
-                <input type="radio" class="btn-check" name="pres_${sid}" id="a_${sid}" value="A" ${current.status === 'A' ? 'checked' : ''} onchange="updateSummary()">
+
+                <input type="radio" class="btn-check" name="pres_${sid}" id="a_${sid}" value="A" ${cur === 'A' ? 'checked' : ''} onchange="updateSummaryAngka()">
                 <label class="btn btn-outline-danger" for="a_${sid}">A</label>
               </div>
             </td>
-            <td><input type="text" class="form-control form-control-sm presensi-ket" value="${current.keterangan}" placeholder="Keterangan opsional"></td>
+            <td>
+              <input type="text" class="form-control form-control-sm pres-ket" value="${ket}" placeholder="Keterangan dispensasi / surat sakit / lainnya">
+            </td>
           </tr>
         `;
       });
-      updateSummary();
+
+      updateSummaryAngka();
+
     } catch (e) {
-      tbody.innerHTML = '<tr><td colspan="4" class="text-danger text-center">Gagal memuat presensi.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="5" class="text-danger text-center py-4">Gagal memuat presensi.</td></tr>';
     }
   }
 
   function setSemuaHadir() {
-    const rows = document.querySelectorAll('#table-presensi-body tr');
-    rows.forEach(r => {
+    document.querySelectorAll('#table-presensi-body tr').forEach(r => {
       const sid = r.getAttribute('data-student-id');
       if (sid) {
         const rad = document.getElementById(`h_${sid}`);
         if (rad) rad.checked = true;
       }
     });
-    updateSummary();
+    updateSummaryAngka();
   }
 
-  function updateSummary() {
-    let cH = 0, cS = 0, cI = 0, cA = 0;
-    const radios = document.querySelectorAll('#table-presensi-body input[type="radio"]:checked');
-    radios.forEach(r => {
-      if (r.value === 'H') cH++;
-      else if (r.value === 'S') cS++;
-      else if (r.value === 'I') cI++;
-      else if (r.value === 'A') cA++;
-    });
-    document.getElementById('counter-h').innerText = cH;
-    document.getElementById('counter-s').innerText = cS;
-    document.getElementById('counter-i').innerText = cI;
-    document.getElementById('counter-a').innerText = cA;
-  }
-
-  async function simpanPresensiMassal() {
-    const btn = document.getElementById('btn-save-presensi');
-    const tanggal = document.getElementById('presensi-date').value;
-    const rows = document.querySelectorAll('#table-presensi-body tr');
-    const records = [];
-
-    rows.forEach(r => {
+  function updateSummaryAngka() {
+    let h = 0, s = 0, i = 0, a = 0;
+    document.querySelectorAll('#table-presensi-body tr').forEach(r => {
       const sid = r.getAttribute('data-student-id');
       if (sid) {
         const checked = r.querySelector(`input[name="pres_${sid}"]:checked`);
-        const ket = r.querySelector('.presensi-ket');
-        records.push({ student_id: sid, status_kehadiran: checked ? checked.value : 'H', keterangan: ket ? ket.value.trim() : '' });
+        const val = checked ? checked.value : 'H';
+        if (val === 'H') h++;
+        else if (val === 'S') s++;
+        else if (val === 'I') i++;
+        else if (val === 'A') a++;
       }
     });
+    document.getElementById('count-h').innerText = h;
+    document.getElementById('count-s').innerText = s;
+    document.getElementById('count-i').innerText = i;
+    document.getElementById('count-a').innerText = a;
+  }
 
-    if (records.length === 0) return alert('Tidak ada siswa untuk disimpan.');
+  async function simpanPresensiMassal() {
+    const tanggal = document.getElementById('presensi-date').value;
+    const btn = document.getElementById('btn-save-presensi');
     btn.innerText = 'Menyimpan...';
     btn.disabled = true;
 
+    const records = [];
+    document.querySelectorAll('#table-presensi-body tr').forEach(r => {
+      const sid = r.getAttribute('data-student-id');
+      if (sid) {
+        const checked = r.querySelector(`input[name="pres_${sid}"]:checked`);
+        const ket = r.querySelector('.pres-ket').value.trim();
+        records.push({
+          student_id: sid,
+          status_kehadiran: checked ? checked.value : 'H',
+          keterangan: ket
+        });
+      }
+    });
+
     const session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
     try {
-      const res = await postGAS({ action: 'savePresensiBatch', tanggal: tanggal, records: records, user_id: session.user_id });
+      const res = await postGAS({
+        action: 'savePresensiBatch',
+        tanggal: tanggal,
+        records: records,
+        user_id: session.user_id
+      });
       alert(res.message);
     } catch (e) {
       alert('Gagal menyimpan presensi.');
     } finally {
-      btn.innerHTML = '<i class="fa-solid fa-floppy-disk me-1"></i> Simpan Presensi Massal';
+      btn.innerHTML = '<i class="fa-solid fa-floppy-disk me-1"></i> Simpan Presensi';
       btn.disabled = false;
     }
   }
 
-  document.getElementById('presensi-date').value = new Date().toISOString().slice(0, 10);
-  loadPresensiMassal();
+  // DOWNLOAD TEMPLATE EXCEL PRESENSI
+  function downloadTemplatePresensi() {
+    if (typeof XLSX === 'undefined') {
+      alert('Library SheetJS belum siap.');
+      return;
+    }
+
+    const tglSekarang = document.getElementById('presensi-date').value || new Date().toISOString().slice(0, 10);
+    const templateData = cacheDaftarSiswaPresensi.length > 0 
+      ? cacheDaftarSiswaPresensi.map(s => ({
+          nis: s.nis || "",
+          nama_lengkap: s.nama_lengkap || "",
+          tanggal: tglSekarang,
+          status_kehadiran: "H",
+          keterangan: ""
+        }))
+      : [
+          { nis: "3567", nama_lengkap: "Contoh Siswa", tanggal: tglSekarang, status_kehadiran: "H", keterangan: "Dispensasi Lomba" }
+        ];
+
+    const worksheet = XLSX.utils.json_to_sheet(templateData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "PRESENSI");
+    XLSX.writeFile(workbook, `Template_Presensi_${tglSekarang}.xlsx`);
+  }
+
+  // IMPORT EXCEL PRESENSI
+  function bukaModalImportPresensi() {
+    document.getElementById('file-import-presensi').value = '';
+    new bootstrap.Modal(document.getElementById('modalImportPresensi')).show();
+  }
+
+  function prosesImportExcelPresensi() {
+    const fileInput = document.getElementById('file-import-presensi');
+    if (!fileInput.files || fileInput.files.length === 0) {
+      alert('Pilih berkas Excel presensi terlebih dahulu.');
+      return;
+    }
+
+    const file = fileInput.files[0];
+    const reader = new FileReader();
+    const btn = document.getElementById('btn-proses-import-pres');
+
+    btn.innerText = 'Membaca Berkas...';
+    btn.disabled = true;
+
+    reader.onload = async function(e) {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+
+        if (rows.length === 0) {
+          alert('Berkas Excel kosong.');
+          btn.innerText = 'Mulai Import Presensi';
+          btn.disabled = false;
+          return;
+        }
+
+        btn.innerText = `Mengimpor ${rows.length} Data...`;
+        const session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
+
+        const res = await postGAS({
+          action: 'importPresensiBatch',
+          user_id: session.user_id,
+          rows: rows
+        });
+
+        alert(res.message);
+        if (res.status === 'success') {
+          bootstrap.Modal.getInstance(document.getElementById('modalImportPresensi')).hide();
+          loadPresensiMassal();
+        }
+      } catch (err) {
+        alert('Gagal membaca Excel presensi: ' + err.toString());
+      } finally {
+        btn.innerText = 'Mulai Import Presensi';
+        btn.disabled = false;
+      }
+    };
+
+    reader.readAsArrayBuffer(file);
+  }
+
+  initPresensi();
 </script>
