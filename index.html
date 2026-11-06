@@ -4,9 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SIMKEL - Sistem Informasi Manajemen Kelas Digital</title>
+  <!-- Bootstrap 5 CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- FontAwesome 6 Icons -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- SheetJS untuk Export / Import Excel -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
     :root {
@@ -21,6 +25,7 @@
       margin: 0;
       padding: 0;
     }
+    /* Sidebar Desktop */
     .simkel-sidebar {
       background-color: var(--primary-navy);
       width: 260px;
@@ -52,6 +57,7 @@
       color: #FFFFFF;
       background-color: var(--accent-blue);
     }
+    /* Konten Utama */
     .simkel-main {
       margin-left: 260px;
       padding: 2rem;
@@ -64,6 +70,13 @@
       background: #FFFFFF;
       padding: 1.25rem;
     }
+    /* Radio Button Presensi */
+    .btn-check:checked + .btn-outline-success { background-color: #16A34A; color: #fff; }
+    .btn-check:checked + .btn-outline-warning { background-color: #D97706; color: #fff; }
+    .btn-check:checked + .btn-outline-info { background-color: #0284C7; color: #fff; }
+    .btn-check:checked + .btn-outline-danger { background-color: #DC2626; color: #fff; }
+
+    /* Tampilan HP Android */
     @media (max-width: 768px) {
       .simkel-sidebar { display: none; }
       .simkel-main { margin-left: 0; padding: 1rem; margin-bottom: 80px; }
@@ -88,7 +101,9 @@
         font-weight: 600;
       }
     }
-    @media (min-width: 769px) { .simkel-bottom-nav { display: none; } }
+    @media (min-width: 769px) {
+      .simkel-bottom-nav { display: none; }
+    }
   </style>
 </head>
 <body>
@@ -108,7 +123,7 @@
 
       <form id="login-form" onsubmit="handleLogin(event)">
         <div class="mb-3">
-          <label class="form-label small fw-semibold text-secondary">Username (Admin atau NIS Siswa)</label>
+          <label class="form-label small fw-semibold text-secondary">Username (Admin atau NIS)</label>
           <input type="text" id="login-username" class="form-control" required placeholder="admin / NIS">
         </div>
         <div class="mb-3">
@@ -140,7 +155,7 @@
           <a class="nav-link" id="menu-kas" onclick="navigateModule('kas')"><i class="fa-solid fa-wallet me-2"></i> Kas & Keuangan</a>
           <a class="nav-link" id="menu-akademik" onclick="navigateModule('akademik')"><i class="fa-solid fa-graduation-cap me-2"></i> Monitoring Nilai</a>
           <a class="nav-link" id="menu-pengumuman" onclick="navigateModule('pengumuman')"><i class="fa-solid fa-bullhorn me-2"></i> Pengumuman</a>
-          <a class="nav-link" id="menu-pengajuan" onclick="navigateModule('pengajuan')"><i class="fa-solid fa-envelope-open-text me-2"></i> Pengajuan Izin/Sakit</a>
+          <a class="nav-link" id="menu-pengajuan" onclick="navigateModule('pengajuan')"><i class="fa-solid fa-envelope-open-text me-2"></i> Pengajuan Izin</a>
           <a class="nav-link" id="menu-bimbingan" onclick="navigateModule('bimbingan')"><i class="fa-solid fa-hands-holding-child me-2"></i> Bimbingan Konseling</a>
           <a class="nav-link" id="menu-inventaris" onclick="navigateModule('inventaris')"><i class="fa-solid fa-boxes-stacked me-2"></i> Inventaris Kelas</a>
           <a class="nav-link" id="menu-pesan" onclick="navigateModule('pesan')"><i class="fa-solid fa-comments me-2"></i> Pesan Internal</a>
@@ -156,7 +171,7 @@
       </div>
     </aside>
 
-    <!-- Konten Utama: Dimuat Dinamis -->
+    <!-- Konten Utama Dinamis -->
     <main class="simkel-main">
       <header class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
         <div>
@@ -168,9 +183,11 @@
         </div>
       </header>
 
-      <!-- Container Komponen Dinamis -->
+      <!-- Tempat memuat modul HTML dinamis -->
       <div id="dynamic-content-container">
-        <div class="text-center py-5 text-muted"><div class="spinner-border spinner-border-sm text-primary me-2"></div>Memuat modul...</div>
+        <div class="text-center py-5 text-muted">
+          <div class="spinner-border spinner-border-sm text-primary me-2"></div>Memuat modul...
+        </div>
       </div>
     </main>
 
@@ -184,7 +201,7 @@
     </nav>
   </div>
 
-  <!-- Modal Ubah Password Mandiri Pengguna -->
+  <!-- Modal Ubah Password Mandiri -->
   <div class="modal fade" id="modalGantiPassword" tabindex="-1">
     <div class="modal-dialog modal-sm">
       <div class="modal-content">
@@ -212,11 +229,9 @@
   <!-- Bootstrap JS Bundle -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-  <!-- Script Core Engine & Dynamic Loader -->
+  <!-- Script Global & Dynamic Loader -->
   <script>
     const API_ENDPOINT = 'https://script.google.com/macros/s/AKfycbxzaCXr0j0-KtMQaWK7tkHseJzjq95MBH-h9DU403jbCGF6D8131-s6zwmpLvgiIjoW/exec';
-    let chartInstance = null;
-    let cacheDaftarSiswa = [];
 
     async function postGAS(payload) {
       const response = await fetch(API_ENDPOINT, {
@@ -279,15 +294,40 @@
     function applyRBACVisibility(role) {
       const isWali = (role === 'WALI_KELAS');
       const isBendahara = (role === 'BENDAHARA' || isWali);
+      const isPengurus = (role === 'KETUA_KELAS' || role === 'SEKRETARIS' || isBendahara);
 
-      const menuNilai = document.getElementById('menu-akademik');
-      if (menuNilai) menuNilai.style.display = isWali ? 'block' : 'none';
+      // 1. Presensi, Jurnal, dan Kedisiplinan: Hanya Wali & Pengurus
+      const menuPresensi = document.getElementById('menu-presensi');
+      const menuJurnal = document.getElementById('menu-jurnal');
+      const menuKedisiplinan = document.getElementById('menu-kedisiplinan');
+      if (menuPresensi) menuPresensi.style.display = isPengurus ? 'block' : 'none';
+      if (menuJurnal) menuJurnal.style.display = isPengurus ? 'block' : 'none';
+      if (menuKedisiplinan) menuKedisiplinan.style.display = isPengurus ? 'block' : 'none';
 
+      // 2. Kas: Hanya Bendahara & Wali
+      const menuKas = document.getElementById('menu-kas');
+      if (menuKas) menuKas.style.display = isBendahara ? 'block' : 'none';
+
+      // 3. Inventaris: Hanya Pengurus & Wali
+      const menuInventaris = document.getElementById('menu-inventaris');
+      if (menuInventaris) menuInventaris.style.display = isPengurus ? 'block' : 'none';
+
+      // 4. Monitoring Nilai & Bimbingan Konseling: Khusus Wali
+      const menuAkademik = document.getElementById('menu-akademik');
       const menuBimbingan = document.getElementById('menu-bimbingan');
+      if (menuAkademik) menuAkademik.style.display = isWali ? 'block' : 'none';
       if (menuBimbingan) menuBimbingan.style.display = isWali ? 'block' : 'none';
+
+      // Sesuaikan bottom nav HP
+      const bnavPresensi = document.getElementById('bnav-presensi');
+      const bnavJurnal = document.getElementById('bnav-jurnal');
+      const bnavKas = document.getElementById('bnav-kas');
+      if (bnavPresensi) bnavPresensi.style.display = isPengurus ? 'block' : 'none';
+      if (bnavJurnal) bnavJurnal.style.display = isPengurus ? 'block' : 'none';
+      if (bnavKas) bnavKas.style.display = isBendahara ? 'block' : 'none';
     }
 
-    // LOADER KOMPONEN MODULAR DINAMIS (Mengambil file components/menu-[name].html)
+    // Dynamic Component Loader
     async function navigateModule(name) {
       const allMenus = ['dashboard','siswa','presensi','jurnal','kedisiplinan','kas','akademik','pengumuman','pengajuan','bimbingan','inventaris','pesan'];
       allMenus.forEach(m => {
@@ -318,11 +358,11 @@
 
       try {
         const response = await fetch(`components/menu-${name}.html`);
-        if (!response.ok) throw new Error('File modul tidak ditemukan: components/menu-' + name + '.html');
+        if (!response.ok) throw new Error(`File components/menu-${name}.html belum diunggah.`);
         const html = await response.text();
         container.innerHTML = html;
 
-        // Eksekusi script internal komponen jika ada
+        // Eksekusi script internal komponen
         const scripts = container.querySelectorAll("script");
         scripts.forEach(s => {
           const newScript = document.createElement("script");
@@ -331,7 +371,7 @@
         });
 
       } catch (err) {
-        container.innerHTML = `<div class="alert alert-danger">Gagal memuat modul ${name}: ${err.message}</div>`;
+        container.innerHTML = `<div class="alert alert-warning my-4"><i class="fa-solid fa-triangle-exclamation me-2"></i> ${err.message}</div>`;
       }
     }
 
