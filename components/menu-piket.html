@@ -75,35 +75,35 @@
 </div>
 
 <script>
-  let dataPiketSemua = [];
-  let mapSiswaPiket = {};
-  let currentHariPilihan = 'Senin';
+  var dataPiketSemua = [];
+  var mapSiswaPiket = {};
+  var currentHariPilihan = 'Senin';
 
   async function loadDataPiket() {
-    const tbody = document.getElementById('table-piket-body');
-    const session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
-    const role = session.role || 'SISWA';
-    const isWali = (role === 'WALI_KELAS');
-    const isBendahara = (role === 'BENDAHARA' || isWali);
-    const isPengurus = (role === 'KETUA_KELAS' || role === 'SEKRETARIS' || isBendahara);
+    var tbody = document.getElementById('table-piket-body');
+    var session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
+    var role = session.role || 'SISWA';
+    var isWali = (role === 'WALI_KELAS');
+    var isBendahara = (role === 'BENDAHARA' || isWali);
+    var isPengurus = (role === 'KETUA_KELAS' || role === 'SEKRETARIS' || isBendahara);
 
-    const btnTambah = document.getElementById('btn-tambah-piket');
-    if (btnTambah) btnTambah.style.display = isPengurus ? 'block' : 'none';
+    var btnTambah = document.getElementById('btn-tambah-piket');
+    if (btnTambah) {
+      btnTambah.style.display = isPengurus ? 'block' : 'none';
+    }
 
     try {
-      // 1. Load data siswa untuk mapping nama
-      const resSiswa = await postGAS({ action: 'getDataSiswa' });
+      var resSiswa = await postGAS({ action: 'getDataSiswa' });
       if (resSiswa.status === 'success' && resSiswa.data) {
-        const sel = document.getElementById('pkt-student-id');
+        var sel = document.getElementById('pkt-student-id');
         sel.innerHTML = '<option value="">-- Pilih Siswa --</option>';
-        resSiswa.data.forEach(s => {
+        resSiswa.data.forEach(function(s) {
           mapSiswaPiket[s.student_id] = s;
-          sel.innerHTML += `<option value="${s.student_id}">${s.nama_lengkap} (${s.nis})</option>`;
+          sel.innerHTML += '<option value="' + s.student_id + '">' + s.nama_lengkap + ' (' + s.nis + ')</option>';
         });
       }
 
-      // 2. Load data jadwal piket
-      const res = await postGAS({ action: 'getJadwalPiket' });
+      var res = await postGAS({ action: 'getJadwalPiket' });
       if (res.status === 'success') {
         dataPiketSemua = res.data || [];
         filterHariPiket(currentHariPilihan);
@@ -115,46 +115,55 @@
 
   function filterHariPiket(hari) {
     currentHariPilihan = hari;
-    const session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
-    const role = session.role || 'SISWA';
-    const isWali = (role === 'WALI_KELAS');
-    const isBendahara = (role === 'BENDAHARA' || isWali);
-    const isPengurus = (role === 'KETUA_KELAS' || role === 'SEKRETARIS' || isBendahara);
+    var session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
+    var role = session.role || 'SISWA';
+    var isWali = (role === 'WALI_KELAS');
+    var isBendahara = (role === 'BENDAHARA' || isWali);
+    var isPengurus = (role === 'KETUA_KELAS' || role === 'SEKRETARIS' || isBendahara);
 
-    // Update active tab button
-    document.querySelectorAll('#pills-hari-piket button').forEach(b => {
-      b.classList.toggle('active', b.innerText === hari);
+    var navButtons = document.querySelectorAll('#pills-hari-piket button');
+    navButtons.forEach(function(b) {
+      if (b.innerText === hari) {
+        b.classList.add('active');
+      } else {
+        b.classList.remove('active');
+      }
     });
 
-    const tbody = document.getElementById('table-piket-body');
+    var tbody = document.getElementById('table-piket-body');
     tbody.innerHTML = '';
 
-    const listHariIni = dataPiketSemua.filter(p => (p.hari || '').toLowerCase() === hari.toLowerCase());
+    var listHariIni = dataPiketSemua.filter(function(p) {
+      return (p.hari || '').toLowerCase() === hari.toLowerCase();
+    });
 
     if (listHariIni.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">Belum ada petugas piket untuk hari ${hari}.</td></tr>`;
+      tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">Belum ada petugas piket untuk hari ' + hari + '.</td></tr>';
       return;
     }
 
-    listHariIni.forEach((p, idx) => {
-      const siswa = mapSiswaPiket[p.student_id] || {};
-      const nama = siswa.nama_lengkap || p.student_id;
-      const nis = siswa.nis || '-';
+    listHariIni.forEach(function(p, idx) {
+      var siswa = mapSiswaPiket[p.student_id] || {};
+      var nama = siswa.nama_lengkap || p.student_id;
+      var nis = siswa.nis || '-';
 
-      tbody.innerHTML += `
-        <tr>
-          <td>${idx + 1}</td>
-          <td><span class="badge bg-primary">${p.hari}</span></td>
-          <td class="fw-semibold text-dark">${nama}</td>
-          <td><small class="text-muted">${nis}</small></td>
-          <td><small class="text-secondary">${p.tugas || 'Kebersihan Kelas'}</small></td>
-          <td class="text-center">
-            ${isPengurus ? `
-              <button class="btn btn-sm btn-outline-danger py-0 px-2" onclick="hapusPiket('${p.piket_id}')" title="Hapus"><i class="fa-solid fa-trash"></i></button>
-            ` : '<span class="text-muted small">-</span>'}
-          </td>
-        </tr>
-      `;
+      var htmlRow = '' +
+        '<tr>' +
+          '<td>' + (idx + 1) + '</td>' +
+          '<td><span class="badge bg-primary">' + p.hari + '</span></td>' +
+          '<td class="fw-semibold text-dark">' + nama + '</td>' +
+          '<td><small class="text-muted">' + nis + '</small></td>' +
+          '<td><small class="text-secondary">' + (p.tugas || 'Kebersihan Kelas') + '</small></td>' +
+          '<td class="text-center">';
+
+      if (isPengurus) {
+        htmlRow += '<button class="btn btn-sm btn-outline-danger py-0 px-2" onclick="hapusPiket(\'' + p.piket_id + '\')" title="Hapus"><i class="fa-solid fa-trash"></i></button>';
+      } else {
+        htmlRow += '<span class="text-muted small">-</span>';
+      }
+
+      htmlRow += '</td></tr>';
+      tbody.innerHTML += htmlRow;
     });
   }
 
@@ -166,13 +175,13 @@
 
   async function submitFormPiket(e) {
     e.preventDefault();
-    const btn = document.getElementById('btn-save-pkt');
+    var btn = document.getElementById('btn-save-pkt');
     btn.innerText = 'Menyimpan...';
     btn.disabled = true;
 
-    const session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
+    var session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
     try {
-      const res = await postGAS({
+      var res = await postGAS({
         action: 'saveJadwalPiket',
         user_id: session.user_id,
         payload: {
@@ -197,9 +206,9 @@
 
   async function hapusPiket(id) {
     if (!confirm('Hapus siswa dari daftar piket ini?')) return;
-    const session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
+    var session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
     try {
-      const res = await postGAS({ action: 'deleteJadwalPiket', piket_id: id, user_id: session.user_id });
+      var res = await postGAS({ action: 'deleteJadwalPiket', piket_id: id, user_id: session.user_id });
       alert(res.message);
       loadDataPiket();
     } catch (e) {
