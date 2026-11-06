@@ -1,0 +1,211 @@
+<section id="panel-piket">
+  <div class="card card-kpi">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+      <div>
+        <h6 class="fw-bold mb-0 text-primary"><i class="fa-solid fa-broom me-2"></i>Jadwal Piket Kebersihan Kelas</h6>
+        <small class="text-muted">Dikelola oleh Wali Kelas dan Pengurus Kelas (Senin s.d. Jumat)</small>
+      </div>
+      <button class="btn btn-primary btn-sm" id="btn-tambah-piket" style="display: none;" onclick="bukaModalPiket()">
+        <i class="fa-solid fa-plus me-1"></i> Tambah Anggota Piket
+      </button>
+    </div>
+
+    <!-- Nav Tab Hari -->
+    <ul class="nav nav-pills mb-3" id="pills-hari-piket" role="tablist">
+      <li class="nav-item"><button class="nav-link active btn-sm" onclick="filterHariPiket('Senin')">Senin</button></li>
+      <li class="nav-item"><button class="nav-link btn-sm" onclick="filterHariPiket('Selasa')">Selasa</button></li>
+      <li class="nav-item"><button class="nav-link btn-sm" onclick="filterHariPiket('Rabu')">Rabu</button></li>
+      <li class="nav-item"><button class="nav-link btn-sm" onclick="filterHariPiket('Kamis')">Kamis</button></li>
+      <li class="nav-item"><button class="nav-link btn-sm" onclick="filterHariPiket('Jumat')">Jumat</button></li>
+    </ul>
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead class="table-dark">
+          <tr>
+            <th style="width: 45px;">No</th>
+            <th>Hari</th>
+            <th>Nama Siswa Petugas</th>
+            <th>NIS</th>
+            <th>Tugas / Tanggung Jawab</th>
+            <th class="text-center" style="width: 80px;">Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="table-piket-body">
+          <tr><td colspan="6" class="text-center text-muted py-4"><div class="spinner-border spinner-border-sm text-primary me-2"></div>Memuat jadwal piket...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- Modal Input Jadwal Piket -->
+<div class="modal fade" id="modalPiket" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h6 class="modal-title fw-bold"><i class="fa-solid fa-broom me-2"></i>Tambah Petugas Piket</h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-3">
+        <form id="form-piket" onsubmit="submitFormPiket(event)">
+          <div class="mb-2">
+            <label class="form-label small fw-semibold">Pilih Hari Piket</label>
+            <select id="pkt-hari" class="form-select form-select-sm" required>
+              <option value="Senin">Senin</option>
+              <option value="Selasa">Selasa</option>
+              <option value="Rabu">Rabu</option>
+              <option value="Kamis">Kamis</option>
+              <option value="Jumat">Jumat</option>
+            </select>
+          </div>
+          <div class="mb-2">
+            <label class="form-label small fw-semibold">Pilih Siswa</label>
+            <select id="pkt-student-id" class="form-select form-select-sm" required></select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Tugas / Fokus Kebersihan</label>
+            <input type="text" id="pkt-tugas" class="form-control form-control-sm" value="Kebersihan Kelas & Papan Tulis" required>
+          </div>
+          <button type="submit" id="btn-save-pkt" class="btn btn-primary btn-sm w-100">Simpan Jadwal</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let dataPiketSemua = [];
+  let mapSiswaPiket = {};
+  let currentHariPilihan = 'Senin';
+
+  async function loadDataPiket() {
+    const tbody = document.getElementById('table-piket-body');
+    const session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
+    const role = session.role || 'SISWA';
+    const isWali = (role === 'WALI_KELAS');
+    const isBendahara = (role === 'BENDAHARA' || isWali);
+    const isPengurus = (role === 'KETUA_KELAS' || role === 'SEKRETARIS' || isBendahara);
+
+    const btnTambah = document.getElementById('btn-tambah-piket');
+    if (btnTambah) btnTambah.style.display = isPengurus ? 'block' : 'none';
+
+    try {
+      // 1. Load data siswa untuk mapping nama
+      const resSiswa = await postGAS({ action: 'getDataSiswa' });
+      if (resSiswa.status === 'success' && resSiswa.data) {
+        const sel = document.getElementById('pkt-student-id');
+        sel.innerHTML = '<option value="">-- Pilih Siswa --</option>';
+        resSiswa.data.forEach(s => {
+          mapSiswaPiket[s.student_id] = s;
+          sel.innerHTML += `<option value="${s.student_id}">${s.nama_lengkap} (${s.nis})</option>`;
+        });
+      }
+
+      // 2. Load data jadwal piket
+      const res = await postGAS({ action: 'getJadwalPiket' });
+      if (res.status === 'success') {
+        dataPiketSemua = res.data || [];
+        filterHariPiket(currentHariPilihan);
+      }
+    } catch (e) {
+      tbody.innerHTML = '<tr><td colspan="6" class="text-danger text-center">Gagal memuat jadwal piket.</td></tr>';
+    }
+  }
+
+  function filterHariPiket(hari) {
+    currentHariPilihan = hari;
+    const session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
+    const role = session.role || 'SISWA';
+    const isWali = (role === 'WALI_KELAS');
+    const isBendahara = (role === 'BENDAHARA' || isWali);
+    const isPengurus = (role === 'KETUA_KELAS' || role === 'SEKRETARIS' || isBendahara);
+
+    // Update active tab button
+    document.querySelectorAll('#pills-hari-piket button').forEach(b => {
+      b.classList.toggle('active', b.innerText === hari);
+    });
+
+    const tbody = document.getElementById('table-piket-body');
+    tbody.innerHTML = '';
+
+    const listHariIni = dataPiketSemua.filter(p => (p.hari || '').toLowerCase() === hari.toLowerCase());
+
+    if (listHariIni.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">Belum ada petugas piket untuk hari ${hari}.</td></tr>`;
+      return;
+    }
+
+    listHariIni.forEach((p, idx) => {
+      const siswa = mapSiswaPiket[p.student_id] || {};
+      const nama = siswa.nama_lengkap || p.student_id;
+      const nis = siswa.nis || '-';
+
+      tbody.innerHTML += `
+        <tr>
+          <td>${idx + 1}</td>
+          <td><span class="badge bg-primary">${p.hari}</span></td>
+          <td class="fw-semibold text-dark">${nama}</td>
+          <td><small class="text-muted">${nis}</small></td>
+          <td><small class="text-secondary">${p.tugas || 'Kebersihan Kelas'}</small></td>
+          <td class="text-center">
+            ${isPengurus ? `
+              <button class="btn btn-sm btn-outline-danger py-0 px-2" onclick="hapusPiket('${p.piket_id}')" title="Hapus"><i class="fa-solid fa-trash"></i></button>
+            ` : '<span class="text-muted small">-</span>'}
+          </td>
+        </tr>
+      `;
+    });
+  }
+
+  function bukaModalPiket() {
+    document.getElementById('form-piket').reset();
+    document.getElementById('pkt-hari').value = currentHariPilihan;
+    new bootstrap.Modal(document.getElementById('modalPiket')).show();
+  }
+
+  async function submitFormPiket(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btn-save-pkt');
+    btn.innerText = 'Menyimpan...';
+    btn.disabled = true;
+
+    const session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
+    try {
+      const res = await postGAS({
+        action: 'saveJadwalPiket',
+        user_id: session.user_id,
+        payload: {
+          hari: document.getElementById('pkt-hari').value,
+          student_id: document.getElementById('pkt-student-id').value,
+          tugas: document.getElementById('pkt-tugas').value.trim()
+        }
+      });
+
+      alert(res.message);
+      if (res.status === 'success') {
+        bootstrap.Modal.getInstance(document.getElementById('modalPiket')).hide();
+        loadDataPiket();
+      }
+    } catch (err) {
+      alert('Gagal menyimpan jadwal piket.');
+    } finally {
+      btn.innerText = 'Simpan Jadwal';
+      btn.disabled = false;
+    }
+  }
+
+  async function hapusPiket(id) {
+    if (!confirm('Hapus siswa dari daftar piket ini?')) return;
+    const session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
+    try {
+      const res = await postGAS({ action: 'deleteJadwalPiket', piket_id: id, user_id: session.user_id });
+      alert(res.message);
+      loadDataPiket();
+    } catch (e) {
+      alert('Gagal menghapus piket.');
+    }
+  }
+
+  loadDataPiket();
+</script>
