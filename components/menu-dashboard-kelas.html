@@ -1,0 +1,276 @@
+<section id="panel-dashboard-kelas">
+  <!-- Header Kartu Kelas Aktif -->
+  <div class="card p-3 mb-4 border-0 bg-white shadow-sm rounded-3">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+      <div>
+        <h5 class="fw-bold text-dark mb-1" id="dk-title"><i class="fa-solid fa-chalkboard text-primary me-2"></i>Dashboard Operasional Kelas</h5>
+        <small class="text-muted" id="dk-desc">Memuat data kelas...</small>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <span id="dk-badge-role" class="badge bg-primary px-3 py-2 fw-semibold">Kelas Aktif</span>
+        <button class="btn btn-outline-secondary btn-sm" onclick="loadDashboardKelasRealtime()" title="Perbarui Data">
+          <i class="fa-solid fa-arrows-rotate"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel Khusus Siswa: Catatan Kehadiran & Poin Pribadi (Otomatis Sembunyi untuk Guru/Kurikulum) -->
+  <div id="panel-siswa-personal" style="display: none;" class="mb-4">
+    <div class="card card-kpi bg-light border-0 shadow-sm">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h6 class="fw-bold text-dark mb-0"><i class="fa-solid fa-id-badge text-primary me-2"></i>Catatan Presensi & Kedisiplinan Saya</h6>
+        <span id="badge-piket-personal" class="badge bg-secondary">Jadwal Piket: -</span>
+      </div>
+      <div class="row g-2 text-center">
+        <div class="col-md-3 col-6">
+          <div class="p-2 border rounded bg-white">
+            <small class="text-muted d-block">Presensi Pribadi</small>
+            <strong class="text-success fs-5" id="persen-presensi-pribadi">100%</strong>
+            <small class="d-block text-muted" id="detail-presensi-pribadi">(0 Hari Hadir)</small>
+          </div>
+        </div>
+        <div class="col-md-3 col-6">
+          <div class="p-2 border rounded bg-white">
+            <small class="text-muted d-block">Izin & Sakit</small>
+            <strong class="text-warning fs-5" id="izin-sakit-pribadi">0</strong>
+            <small class="d-block text-muted" id="detail-is-pribadi">S:0 | I:0</small>
+          </div>
+        </div>
+        <div class="col-md-3 col-6">
+          <div class="p-2 border rounded bg-white">
+            <small class="text-muted d-block">Alfa / Tanpa Ket.</small>
+            <strong class="text-danger fs-5" id="alfa-pribadi">0</strong>
+            <small class="d-block text-muted">Hari</small>
+          </div>
+        </div>
+        <div class="col-md-3 col-6">
+          <div class="p-2 border rounded bg-white">
+            <small class="text-muted d-block">Poin Pelanggaran</small>
+            <strong class="text-primary fs-5" id="poin-pribadi">0</strong>
+            <small class="d-block text-muted" id="status-ews-pribadi">Status: Aman</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4 Kartu KPI Kelas Aktif -->
+  <div class="row g-3 mb-4" id="kpi-kelas-container">
+    <div class="col-12 text-center py-4 text-muted">
+      <div class="spinner-border spinner-border-sm text-primary me-2"></div>Memuat data operasional kelas...
+    </div>
+  </div>
+
+  <!-- Analisis Kehadiran Donut & Jadwal Piket / EWS -->
+  <div class="row g-3">
+    <!-- Kolom Kiri: Donut Kehadiran Hari Ini -->
+    <div class="col-md-4 col-12">
+      <div class="card card-kpi h-100 text-center">
+        <h6 class="fw-bold text-dark mb-2"><i class="fa-solid fa-chart-pie me-2 text-primary"></i>Rasio Presensi Hari Ini</h6>
+        <div style="position: relative; height: 180px;" class="my-2">
+          <canvas id="chart-kehadiran-kelas"></canvas>
+        </div>
+        <div class="row g-1 small mt-2">
+          <div class="col-3 text-success fw-bold">H: <span id="lbl-h">0</span></div>
+          <div class="col-3 text-warning fw-bold">S: <span id="lbl-s">0</span></div>
+          <div class="col-3 text-info fw-bold">I: <span id="lbl-i">0</span></div>
+          <div class="col-3 text-danger fw-bold">A: <span id="lbl-a">0</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Kolom Tengah: Daftar Piket Kebersihan Hari Ini -->
+    <div class="col-md-4 col-12">
+      <div class="card card-kpi h-100 bg-light border-0">
+        <h6 class="fw-bold text-dark mb-2"><i class="fa-solid fa-broom me-2 text-primary"></i>Petugas Piket Hari Ini</h6>
+        <p class="small text-muted mb-2">Hari: <strong id="hari-ini-teks">Senin</strong></p>
+        <div id="box-piket-hari-ini" class="small mb-3 text-dark">Memuat jadwal...</div>
+        <button class="btn btn-outline-primary btn-sm mt-auto" onclick="navigateModule('piket')">
+          <i class="fa-solid fa-calendar-days me-1"></i> Buka Jadwal Lengkap
+        </button>
+      </div>
+    </div>
+
+    <!-- Kolom Kanan: Early Warning System (EWS) -->
+    <div class="col-md-4 col-12">
+      <div class="card card-kpi h-100">
+        <h6 class="fw-bold text-danger mb-2"><i class="fa-solid fa-triangle-exclamation me-2"></i>Perhatian Khusus (EWS)</h6>
+        <small class="text-muted d-block mb-2">Siswa dengan Poin >= 25 atau Alfa >= 3:</small>
+        <ul id="list-ews-kelas" class="small ps-3 mb-3 text-dark">
+          <li class="text-muted fst-italic">Memuat data disiplin...</li>
+        </ul>
+        <button class="btn btn-outline-danger btn-sm mt-auto" onclick="navigateModule('kedisiplinan')">
+          <i class="fa-solid fa-shield-halved me-1"></i> Buka Modul Kedisiplinan
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  var chartDonutInstance = null;
+
+  async function loadDashboardKelasRealtime() {
+    var session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
+    var activeClassId = (sessionStorage.getItem('SIMKEL_ACTIVE_CLASS_ID') || '').toString().trim();
+    var kpiBox = document.getElementById('kpi-kelas-container');
+
+    try {
+      var res = await postGAS({
+        action: 'getDashboardData',
+        user_id: session.user_id,
+        class_id: activeClassId
+      });
+
+      if (res.status !== 'success') {
+        kpiBox.innerHTML = '<div class="col-12"><div class="alert alert-danger py-2 small">' + res.message + '</div></div>';
+        return;
+      }
+
+      var d = res.data;
+      var role = session.role;
+      var isSiswa = (role === 'SISWA');
+      var isKurikulum = (role === 'KURIKULUM' || role === 'ADMIN');
+
+      // Update Header
+      document.getElementById('dk-title').innerHTML = '<i class="fa-solid fa-chalkboard text-primary me-2"></i>Dashboard Kelas: ' + d.nama_kelas;
+      document.getElementById('dk-desc').innerHTML = 'Wali Kelas: <strong>' + d.wali_kelas + '</strong> &bull; Total Siswa Terdaftar: <strong>' + d.total_siswa + '</strong>';
+      document.getElementById('dk-badge-role').innerText = isSiswa ? 'Siswa ' + d.nama_kelas : (isKurikulum ? 'Inspeksi Kurikulum' : 'Wali Kelas');
+
+      // Tampilkan Panel Pribadi Siswa jika user = Siswa
+      var panelSiswa = document.getElementById('panel-siswa-personal');
+      if (isSiswa && d.personal) {
+        panelSiswa.style.display = 'block';
+        var p = d.personal;
+        var myPres = p.kehadiran || { hadir: 0, sakit: 0, izin: 0, alfa: 0, total: 0 };
+        var ratePribadi = myPres.total > 0 ? Math.round((myPres.hadir / myPres.total) * 100) : 100;
+
+        document.getElementById('persen-presensi-pribadi').innerText = ratePribadi + '%';
+        document.getElementById('detail-presensi-pribadi').innerText = '(' + myPres.hadir + ' dari ' + myPres.total + ' hari)';
+        document.getElementById('izin-sakit-pribadi').innerText = (myPres.sakit + myPres.izin);
+        document.getElementById('detail-is-pribadi').innerText = 'S:' + myPres.sakit + ' | I:' + myPres.izin;
+        document.getElementById('alfa-pribadi').innerText = myPres.alfa;
+        document.getElementById('poin-pribadi').innerText = p.poin_disiplin;
+        document.getElementById('status-ews-pribadi').innerText = 'Status: ' + (p.poin_disiplin >= 25 ? 'Peringatan' : 'Aman');
+
+        var badgePkt = document.getElementById('badge-piket-personal');
+        if (p.piket_hari_ini) {
+          badgePkt.className = 'badge bg-danger';
+          badgePkt.innerText = 'Hari ini giliran piket Anda!';
+        } else {
+          badgePkt.className = 'badge bg-secondary';
+          badgePkt.innerText = 'Jadwal Piket: ' + p.jadwal_piket;
+        }
+      } else {
+        panelSiswa.style.display = 'none';
+      }
+
+      // Render 4 KPI Utama Kelas
+      kpiBox.innerHTML = '' +
+        '<div class="col-md-3 col-6">' +
+          '<div class="card card-kpi border-start border-primary border-4">' +
+            '<small class="text-muted fw-semibold">Siswa di Kelas Ini</small>' +
+            '<h3 class="fw-bold my-1 text-dark">' + d.total_siswa + '</h3>' +
+            '<small class="text-muted">Terdaftar aktif</small>' +
+          '</div>' +
+        '</div>' +
+        '<div class="col-md-3 col-6">' +
+          '<div class="card card-kpi border-start border-success border-4">' +
+            '<small class="text-muted fw-semibold">Hadir Hari Ini</small>' +
+            '<h3 class="fw-bold my-1 text-success">' + d.kehadiran_hari_ini.hadir + ' <small class="fs-6 text-muted">(' + d.kehadiran_hari_ini.persen + '%)</small></h3>' +
+            '<small class="text-muted">Dari ' + d.total_siswa + ' siswa</small>' +
+          '</div>' +
+        '</div>' +
+        '<div class="col-md-3 col-6">' +
+          '<div class="card card-kpi border-start border-danger border-4">' +
+            '<small class="text-muted fw-semibold">Perlu Perhatian (EWS)</small>' +
+            '<h3 class="fw-bold my-1 text-danger">' + d.perlu_perhatian_count + '</h3>' +
+            '<small class="text-muted">Poin >= 25 atau Alfa >= 3</small>' +
+          '</div>' +
+        '</div>' +
+        '<div class="col-md-3 col-6">' +
+          '<div class="card card-kpi border-start border-warning border-4">' +
+            '<small class="text-muted fw-semibold">Saldo Kas Kelas Ini</small>' +
+            '<h3 class="fw-bold my-1 text-warning">Rp ' + Number(d.saldo_kas).toLocaleString('id-ID') + '</h3>' +
+            '<small class="text-muted">Kas kelas ' + d.nama_kelas + '</small>' +
+          '</div>' +
+        '</div>';
+
+      // Update Angka Legend Donut
+      document.getElementById('lbl-h').innerText = d.kehadiran_hari_ini.hadir;
+      document.getElementById('lbl-s').innerText = d.kehadiran_hari_ini.sakit;
+      document.getElementById('lbl-i').innerText = d.kehadiran_hari_ini.izin;
+      document.getElementById('lbl-a').innerText = d.kehadiran_hari_ini.alfa;
+
+      // Render Donut Chart Kehadiran
+      renderChartDonut(
+        d.kehadiran_hari_ini.hadir,
+        d.kehadiran_hari_ini.sakit,
+        d.kehadiran_hari_ini.izin,
+        d.kehadiran_hari_ini.alfa
+      );
+
+      // Render Piket Hari Ini
+      var hariTeks = new Date().toLocaleDateString('id-ID', { weekday: 'long' });
+      document.getElementById('hari-ini-teks').innerText = hariTeks;
+      var boxPkt = document.getElementById('box-piket-hari-ini');
+      if (d.piket_hari_ini && d.piket_hari_ini.length > 0) {
+        boxPkt.innerHTML = '<ol class="ps-3 mb-0">' + d.piket_hari_ini.map(function(nama) {
+          return '<li class="fw-semibold">' + nama + '</li>';
+        }).join('') + '</ol>';
+      } else {
+        boxPkt.innerHTML = '<span class="text-muted fst-italic">Tidak ada petugas piket terjadwal untuk hari ' + hariTeks + '.</span>';
+      }
+
+      // Render EWS List
+      var listEws = document.getElementById('list-ews-kelas');
+      if (d.siswa_perhatian && d.siswa_perhatian.length > 0) {
+        listEws.innerHTML = d.siswa_perhatian.map(function(s) {
+          return '<li><strong>' + s.nama + '</strong> (NIS: ' + s.nis + ') &mdash; <span class="text-danger fw-semibold">Poin: ' + s.poin + '</span> | Alfa: ' + s.alfa + ' hari</li>';
+        }).join('');
+      } else {
+        listEws.innerHTML = '<li class="text-muted fst-italic">Kondusif: Tidak ada siswa dengan peringatan disiplin/alfa tinggi di kelas ini.</li>';
+      }
+
+    } catch (err) {
+      kpiBox.innerHTML = '<div class="col-12"><div class="alert alert-danger py-2 small">Gagal memuat visualisasi kelas.</div></div>';
+    }
+  }
+
+  function renderChartDonut(h, s, i, a) {
+    var ctx = document.getElementById('chart-kehadiran-kelas');
+    if (!ctx) return;
+
+    if (chartDonutInstance) {
+      chartDonutInstance.destroy();
+    }
+
+    // Jika belum ada data presensi sama sekali hari ini
+    if (h === 0 && s === 0 && i === 0 && a === 0) {
+      h = 1; // dummy placeholder visual
+    }
+
+    chartDonutInstance = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Hadir', 'Sakit', 'Izin', 'Alfa'],
+        datasets: [{
+          data: [h, s, i, a],
+          backgroundColor: ['#16A34A', '#D97706', '#0284C7', '#DC2626'],
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }
+        },
+        cutout: '70%'
+      }
+    });
+  }
+
+  loadDashboardKelasRealtime();
+</script>

@@ -1,0 +1,210 @@
+<section id="panel-dashboard-sekolah">
+  <!-- Banner Eksekutif Sekolah -->
+  <div class="card p-3 mb-4 border-0 bg-white shadow-sm rounded-3">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+      <div>
+        <h5 class="fw-bold text-dark mb-1"><i class="fa-solid fa-school-flag text-danger me-2"></i>Pusat Komando Kurikulum & Kesiswaan</h5>
+        <small class="text-muted">Monitoring makro seluruh rombel, tingkat presensi harian sekolah, dan administrasi kelas.</small>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2 fw-semibold">
+          <i class="fa-solid fa-globe me-1"></i>Lingkup: Seluruh Sekolah
+        </span>
+        <button class="btn btn-outline-secondary btn-sm" onclick="loadDashboardSekolahRealtime()" title="Perbarui Data">
+          <i class="fa-solid fa-arrows-rotate"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- KPI Metrik Sekolah -->
+  <div class="row g-3 mb-4" id="kpi-sekolah-container">
+    <div class="col-12 text-center py-4 text-muted">
+      <div class="spinner-border spinner-border-sm text-primary me-2"></div>Memuat metrik sekolah...
+    </div>
+  </div>
+
+  <!-- Grafik Analitik Rombel & Rekap Tabel -->
+  <div class="row g-3">
+    <!-- Kolom Kiri: Tabel Status Rombel -->
+    <div class="col-lg-8 col-12">
+      <div class="card card-kpi h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h6 class="fw-bold text-dark mb-0"><i class="fa-solid fa-chalkboard-user me-2 text-primary"></i>Status Rombongan Belajar (Rombel)</h6>
+          <small class="text-muted">Klik Inspeksi untuk melihat data kelas spesifik</small>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead class="table-dark">
+              <tr>
+                <th style="width: 40px;" class="text-center">No</th>
+                <th>Nama Kelas</th>
+                <th>Tingkat</th>
+                <th>Wali Kelas</th>
+                <th class="text-center">Total Siswa</th>
+                <th class="text-center">Kehadiran Hari Ini</th>
+                <th class="text-center" style="width: 140px;">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="table-rombel-body">
+              <tr><td colspan="7" class="text-center text-muted py-3">Memuat rombel...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Kolom Kanan: Grafik Batang Persentase Kehadiran -->
+    <div class="col-lg-4 col-12">
+      <div class="card card-kpi h-100">
+        <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-chart-simple me-2 text-primary"></i>Grafik Kehadiran per Rombel</h6>
+        <div style="position: relative; height: 260px;">
+          <canvas id="chart-rombel-hadir"></canvas>
+        </div>
+        <small class="text-muted d-block text-center mt-2" style="font-size: 0.75rem;">Persentase siswa hadir hari ini di setiap kelas.</small>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  var chartRombelInstance = null;
+
+  async function loadDashboardSekolahRealtime() {
+    var session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
+    var kpiBox = document.getElementById('kpi-sekolah-container');
+    var tbody = document.getElementById('table-rombel-body');
+
+    try {
+      var res = await postGAS({
+        action: 'getDashboardData',
+        user_id: session.user_id,
+        class_id: 'ALL'
+      });
+
+      if (res.status !== 'success') {
+        kpiBox.innerHTML = '<div class="col-12"><div class="alert alert-danger py-2 small">' + res.message + '</div></div>';
+        return;
+      }
+
+      var d = res.data;
+
+      // Render 4 KPI Utama Sekolah
+      kpiBox.innerHTML = '' +
+        '<div class="col-md-3 col-6">' +
+          '<div class="card card-kpi border-start border-danger border-4">' +
+            '<small class="text-muted fw-semibold">Total Ruang Kelas</small>' +
+            '<h3 class="fw-bold my-1 text-dark">' + d.total_kelas + '</h3>' +
+            '<small class="text-muted">Rombel aktif semester ini</small>' +
+          '</div>' +
+        '</div>' +
+        '<div class="col-md-3 col-6">' +
+          '<div class="card card-kpi border-start border-primary border-4">' +
+            '<small class="text-muted fw-semibold">Total Seluruh Siswa</small>' +
+            '<h3 class="fw-bold my-1 text-dark">' + d.total_siswa + '</h3>' +
+            '<small class="text-muted">Terdaftar di semua kelas</small>' +
+          '</div>' +
+        '</div>' +
+        '<div class="col-md-3 col-6">' +
+          '<div class="card card-kpi border-start border-success border-4">' +
+            '<small class="text-muted fw-semibold">Rata-rata Hadir Hari Ini</small>' +
+            '<h3 class="fw-bold my-1 text-success">' + d.persentase_sekolah + '%</h3>' +
+            '<small class="text-muted">' + d.hadir_hari_ini + ' dari ' + d.total_siswa + ' siswa masuk</small>' +
+          '</div>' +
+        '</div>' +
+        '<div class="col-md-3 col-6">' +
+          '<div class="card card-kpi border-start border-warning border-4">' +
+            '<small class="text-muted fw-semibold">Total Saldo Kas Seluruh Kelas</small>' +
+            '<h3 class="fw-bold my-1 text-warning">Rp ' + Number(d.total_kas_sekolah).toLocaleString('id-ID') + '</h3>' +
+            '<small class="text-muted">Akumulasi kas sekolah</small>' +
+          '</div>' +
+        '</div>';
+
+      // Render Tabel Rombel
+      tbody.innerHTML = '';
+      var labelsChart = [];
+      var dataChart = [];
+
+      if (d.rekap_rombel && d.rekap_rombel.length > 0) {
+        d.rekap_rombel.forEach(function(r, idx) {
+          labelsChart.push(r.nama_kelas);
+          dataChart.push(r.persentase_hadir);
+
+          var row = '' +
+            '<tr>' +
+              '<td class="text-center">' + (idx + 1) + '</td>' +
+              '<td class="fw-bold text-dark">' + r.nama_kelas + '</td>' +
+              '<td><span class="badge bg-secondary">' + r.tingkat + '</span></td>' +
+              '<td>' + r.nama_wali + '</td>' +
+              '<td class="text-center">' + r.total_siswa + ' Siswa</td>' +
+              '<td class="text-center">' +
+                '<span class="fw-semibold text-success">' + r.hadir_hari_ini + '</span> / ' + r.total_siswa +
+                ' <small class="text-muted">(' + r.persentase_hadir + '%)</small>' +
+              '</td>' +
+              '<td class="text-center">' +
+                '<button class="btn btn-sm btn-outline-primary py-0 px-2" onclick="inspeksiKelasLangsung(\'' + r.class_id + '\')">' +
+                  '<i class="fa-solid fa-arrow-up-right-from-square me-1"></i>Inspeksi' +
+                '</button>' +
+              '</td>' +
+            '</tr>';
+          tbody.innerHTML += row;
+        });
+
+        renderChartKehadiranRombel(labelsChart, dataChart);
+
+      } else {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-3">Belum ada data rombel kelas.</td></tr>';
+      }
+
+    } catch (e) {
+      kpiBox.innerHTML = '<div class="col-12"><div class="alert alert-danger py-2 small">Gagal memuat dashboard sekolah.</div></div>';
+    }
+  }
+
+  function renderChartKehadiranRombel(labels, data) {
+    var ctx = document.getElementById('chart-rombel-hadir');
+    if (!ctx) return;
+
+    if (chartRombelInstance) {
+      chartRombelInstance.destroy();
+    }
+
+    chartRombelInstance = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: '% Kehadiran',
+          data: data,
+          backgroundColor: '#2563EB',
+          borderRadius: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            max: 100,
+            ticks: { callback: function(val) { return val + '%'; } }
+          }
+        },
+        plugins: {
+          legend: { display: false }
+        }
+      }
+    });
+  }
+
+  // Fungsi Melompat Langsung Memantau Kelas Tertentu
+  function inspeksiKelasLangsung(classId) {
+    var select = document.getElementById('select-active-class');
+    if (select) {
+      select.value = classId;
+      gantiKelasAktif(classId); // Memicu navigasi otomatis ke menu-dashboard-kelas.html
+    }
+  }
+
+  loadDashboardSekolahRealtime();
+</script>
