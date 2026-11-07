@@ -74,7 +74,7 @@
 </head>
 <body>
 
-  <!-- Layar Login -->
+  <!-- Layar Login Pengguna -->
   <div id="login-view" class="container d-flex align-items-center justify-content-center min-vh-100">
     <div class="card p-4 shadow border-0" style="max-width: 380px; width: 100%; border-radius: 1rem;">
       <div class="text-center mb-4">
@@ -90,7 +90,7 @@
       <form id="login-form" onsubmit="handleLogin(event)">
         <div class="mb-3">
           <label class="form-label small fw-semibold text-secondary">Username (Admin / Guru / NIS)</label>
-          <input type="text" id="login-username" class="form-control" required placeholder="Username Anda">
+          <input type="text" id="login-username" class="form-control" required placeholder="admin / NIS">
         </div>
         <div class="mb-3">
           <label class="form-label small fw-semibold text-secondary">Password</label>
@@ -118,6 +118,7 @@
         </div>
         <nav class="nav flex-column" id="sidebar-nav">
           <a class="nav-link active" id="menu-dashboard" onclick="navigateModule('dashboard')"><i class="fa-solid fa-chart-pie me-2"></i> Dashboard</a>
+          <a class="nav-link" id="menu-guru" onclick="navigateModule('guru')" style="display: none;"><i class="fa-solid fa-chalkboard-user me-2"></i> Manajemen Guru</a>
           <a class="nav-link" id="menu-siswa" onclick="navigateModule('siswa')"><i class="fa-solid fa-users me-2"></i> Data Siswa</a>
           <a class="nav-link" id="menu-presensi" onclick="navigateModule('presensi')"><i class="fa-solid fa-calendar-check me-2"></i> Presensi Harian</a>
           <a class="nav-link" id="menu-piket" onclick="navigateModule('piket')"><i class="fa-solid fa-broom me-2"></i> Jadwal Piket</a>
@@ -221,7 +222,7 @@
     </div>
   </div>
 
-  <!-- Modal Ubah Password -->
+  <!-- Modal Ubah Password Mandiri -->
   <div class="modal fade" id="modalGantiPassword" tabindex="-1">
     <div class="modal-dialog modal-sm">
       <div class="modal-content">
@@ -346,7 +347,6 @@
       document.getElementById('role-badge').innerText = 'Role: ' + (isKurikulum ? 'Kurikulum' : (isWali ? 'Wali Kelas' : role));
       applyRBACVisibility(role);
 
-      // Konfigurasi Selector Kelas
       const selectorBox = document.getElementById('wali-class-selector-box');
       const btnTambahKelas = document.getElementById('btn-tambah-kelas-kurikulum');
 
@@ -477,7 +477,9 @@
       const isBendahara = (role === 'BENDAHARA' || isWali);
       const isPengurus = (role === 'KETUA_KELAS' || role === 'SEKRETARIS' || isBendahara);
 
-      // Seluruh modul terbuka penuh untuk Kurikulum & Wali Kelas
+      const mGuru = document.getElementById('menu-guru');
+      if (mGuru) mGuru.style.display = isKurikulum ? 'block' : 'none';
+
       const mPres = document.getElementById('menu-presensi');
       const mJur = document.getElementById('menu-jurnal');
       const mDis = document.getElementById('menu-kedisiplinan');
@@ -501,7 +503,7 @@
     }
 
     async function navigateModule(name) {
-      const allMenus = ['dashboard','siswa','presensi','piket','jurnal','kedisiplinan','kas','akademik','pengumuman','pengajuan','inventaris'];
+      const allMenus = ['dashboard','guru','siswa','presensi','piket','jurnal','kedisiplinan','kas','akademik','pengumuman','pengajuan','inventaris'];
       allMenus.forEach(m => {
         const elMenu = document.getElementById('menu-' + m);
         const elBnav = document.getElementById('bnav-' + m);
@@ -510,11 +512,18 @@
       });
 
       const titleMap = {
-        'dashboard': 'DASHBOARD', 'siswa': 'DATA SISWA', 'presensi': 'PRESENSI HARIAN MASSAL',
-        'piket': 'JADWAL PIKET KELAS', 'jurnal': 'JURNAL & AGENDA KELAS',
-        'kedisiplinan': 'KEDISIPLINAN & EWS', 'kas': 'KAS & KEUANGAN KELAS',
-        'akademik': 'MONITORING NILAI', 'pengumuman': 'PENGUMUMAN KELAS',
-        'pengajuan': 'PENGAJUAN IZIN & DISPEN', 'inventaris': 'INVENTARIS KELAS'
+        'dashboard': 'DASHBOARD',
+        'guru': 'MANAJEMEN AKUN GURU & WALI KELAS',
+        'siswa': 'DATA SISWA',
+        'presensi': 'PRESENSI HARIAN MASSAL',
+        'piket': 'JADWAL PIKET KELAS',
+        'jurnal': 'JURNAL & AGENDA KELAS',
+        'kedisiplinan': 'KEDISIPLINAN & EWS',
+        'kas': 'KAS & KEUANGAN KELAS',
+        'akademik': 'MONITORING NILAI',
+        'pengumuman': 'PENGUMUMAN KELAS',
+        'pengajuan': 'PENGAJUAN IZIN & DISPEN',
+        'inventaris': 'INVENTARIS KELAS'
       };
       document.getElementById('header-title').innerText = titleMap[name] || name.toUpperCase();
 
