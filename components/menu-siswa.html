@@ -10,17 +10,11 @@
         </select>
       </div>
 
-      <!-- Tombol Aksi: Tersembunyi secara bawaan, HANYA dimunculkan untuk WALI_KELAS -->
+      <!-- Tombol Aksi: Tersembunyi secara default, hanya ditampilkan untuk WALI_KELAS -->
       <div id="siswa-btn-actions" style="display: none !important;" class="gap-2">
-        <button class="btn btn-outline-success btn-sm" onclick="downloadTemplateSiswa()">
-          <i class="fa-solid fa-download me-1"></i> Template Excel
-        </button>
-        <button class="btn btn-outline-primary btn-sm" onclick="bukaModalImportSiswa()">
-          <i class="fa-solid fa-file-import me-1"></i> Import Excel
-        </button>
-        <button class="btn btn-primary btn-sm" onclick="bukaModalTambahSiswa()">
-          <i class="fa-solid fa-user-plus me-1"></i> Tambah Siswa
-        </button>
+        <button class="btn btn-outline-success btn-sm" onclick="downloadTemplateSiswa()"><i class="fa-solid fa-download me-1"></i> Template Excel</button>
+        <button class="btn btn-outline-primary btn-sm" onclick="bukaModalImportSiswa()"><i class="fa-solid fa-file-import me-1"></i> Import Excel</button>
+        <button class="btn btn-primary btn-sm" onclick="bukaModalTambahSiswa()"><i class="fa-solid fa-user-plus me-1"></i> Tambah Siswa</button>
       </div>
     </div>
 
@@ -34,27 +28,23 @@
             <th>L/P</th>
             <th>Jabatan / Role</th>
             <th>No HP / WA</th>
-            <th class="text-center" style="width: 200px;">Aksi</th>
+            <th class="text-center" style="width: 230px;">Aksi</th>
           </tr>
         </thead>
         <tbody id="table-siswa-body">
-          <tr>
-            <td colspan="7" class="text-center text-muted py-4">
-              <div class="spinner-border spinner-border-sm text-primary me-2"></div>Memuat data siswa...
-            </td>
-          </tr>
+          <tr><td colspan="7" class="text-center text-muted py-4"><div class="spinner-border spinner-border-sm text-primary me-2"></div>Memuat data siswa kelas...</td></tr>
         </tbody>
       </table>
     </div>
   </div>
 </section>
 
-<!-- MODAL STUDENT 360 -->
+<!-- ================= MODAL STUDENT 360° ================= -->
 <div class="modal fade" id="modalStudent360" tabindex="-1">
   <div class="modal-dialog modal-lg modal-dialog-scrollable">
     <div class="modal-content">
       <div class="modal-header bg-primary text-white">
-        <h6 class="modal-title fw-bold"><i class="fa-solid fa-id-card-clip me-2"></i>Student 360 - Profil Siswa</h6>
+        <h6 class="modal-title fw-bold"><i class="fa-solid fa-id-card-clip me-2"></i>Student 360° - Profil Komprehensif Siswa</h6>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body p-3" id="student-360-content">
@@ -67,7 +57,35 @@
   </div>
 </div>
 
-<!-- MODAL TAMBAH / EDIT SISWA (KHUSUS WALI KELAS) -->
+<!-- ================= MODAL PINDAH KELAS SISWA ================= -->
+<div class="modal fade" id="modalPindahKelas" tabindex="-1">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+      <div class="modal-header bg-dark text-white">
+        <h6 class="modal-title fw-bold"><i class="fa-solid fa-arrow-right-arrow-left me-2"></i>Pindah Kelas</h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-3">
+        <input type="hidden" id="pk-student-id">
+        <div class="mb-2">
+          <small class="text-muted d-block">Siswa:</small>
+          <strong id="pk-nama-siswa" class="text-dark"></strong>
+        </div>
+        <div class="mb-3">
+          <label class="form-label small fw-semibold">Pilih Kelas Tujuan</label>
+          <select id="pk-target-class" class="form-select form-select-sm" required>
+            <option value="">Memuat daftar kelas...</option>
+          </select>
+        </div>
+        <button type="button" id="btn-proses-pindah" class="btn btn-primary btn-sm w-100" onclick="prosesPindahKelas()">
+          Konfirmasi Pindah Kelas
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= MODAL TAMBAH / EDIT SISWA ================= -->
 <div class="modal fade" id="modalTambahSiswa" tabindex="-1">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
@@ -99,12 +117,12 @@
           </div>
           <div class="mb-2">
             <label class="form-label small fw-semibold">Nama Lengkap Siswa</label>
-            <input type="text" id="fs-nama" class="form-control form-control-sm" required placeholder="Nama lengkap">
+            <input type="text" id="fs-nama" class="form-control form-control-sm" required placeholder="Nama lengkap siswa">
           </div>
           <div class="row g-2 mb-2">
             <div class="col-md-6">
               <label class="form-label small fw-semibold">Tempat Lahir</label>
-              <input type="text" id="fs-tempat-lahir" class="form-control form-control-sm" placeholder="Kota lahir">
+              <input type="text" id="fs-tempat-lahir" class="form-control form-control-sm" placeholder="Kota kelahiran">
             </div>
             <div class="col-md-6">
               <label class="form-label small fw-semibold">Tanggal Lahir</label>
@@ -142,14 +160,14 @@
           </div>
           <div class="mb-3">
             <label class="form-label small fw-semibold">Alamat Siswa</label>
-            <textarea id="fs-alamat" class="form-control form-control-sm" rows="2" placeholder="Alamat siswa..."></textarea>
+            <textarea id="fs-alamat" class="form-control form-control-sm" rows="2" placeholder="Alamat tempat tinggal siswa..."></textarea>
           </div>
 
           <h6 class="fw-bold text-primary mb-2 border-bottom pb-1 small">Data Orang Tua / Wali</h6>
           <div class="row g-2 mb-2">
             <div class="col-md-6">
               <label class="form-label small fw-semibold">Nama Ayah</label>
-              <input type="text" id="fs-ayah" class="form-control form-control-sm" placeholder="Nama ayah">
+              <input type="text" id="fs-ayah" class="form-control form-control-sm" placeholder="Nama ayah kandung / wali">
             </div>
             <div class="col-md-6">
               <label class="form-label small fw-semibold">Pekerjaan Ayah</label>
@@ -159,7 +177,7 @@
           <div class="row g-2 mb-2">
             <div class="col-md-6">
               <label class="form-label small fw-semibold">Nama Ibu</label>
-              <input type="text" id="fs-ibu" class="form-control form-control-sm" placeholder="Nama ibu">
+              <input type="text" id="fs-ibu" class="form-control form-control-sm" placeholder="Nama ibu kandung">
             </div>
             <div class="col-md-6">
               <label class="form-label small fw-semibold">Pekerjaan Ibu</label>
@@ -167,18 +185,18 @@
             </div>
           </div>
           <div class="mb-2">
-            <label class="form-label small fw-semibold">No. HP Orang Tua</label>
+            <label class="form-label small fw-semibold">No. HP / WhatsApp Orang Tua</label>
             <input type="text" id="fs-hp-ortu" class="form-control form-control-sm" placeholder="08xxxxxxxxxx">
           </div>
           <div class="mb-3">
             <div class="d-flex justify-content-between align-items-center mb-1">
-              <label class="form-label small fw-semibold mb-0">Alamat Orang Tua</label>
+              <label class="form-label small fw-semibold mb-0">Alamat Orang Tua / Wali</label>
               <div class="form-check form-check-inline mb-0">
                 <input class="form-check-input" type="checkbox" id="fs-cek-alamat-sama" onchange="handleAlamatSama(this)">
                 <label class="form-check-label small text-muted" for="fs-cek-alamat-sama">Sama dengan alamat siswa</label>
               </div>
             </div>
-            <textarea id="fs-alamat-ortu" class="form-control form-control-sm" rows="2" placeholder="Alamat orang tua..."></textarea>
+            <textarea id="fs-alamat-ortu" class="form-control form-control-sm" rows="2" placeholder="Alamat lengkap orang tua / wali..."></textarea>
           </div>
 
           <button type="submit" id="btn-save-fs" class="btn btn-primary btn-sm w-100 py-2 fw-semibold">
@@ -190,7 +208,7 @@
   </div>
 </div>
 
-<!-- MODAL IMPORT EXCEL (KHUSUS WALI KELAS) -->
+<!-- ================= MODAL IMPORT SISWA EXCEL ================= -->
 <div class="modal fade" id="modalImportSiswa" tabindex="-1">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -200,7 +218,7 @@
       </div>
       <div class="modal-body p-3">
         <p class="small text-muted mb-2">
-          Gunakan template Excel resmi agar kolom data keluarga terpetakan sesuai format.
+          Gunakan file template Excel resmi untuk memastikan data identitas dan keluarga terimpor secara presisi ke kelas yang aktif.
         </p>
         <div class="mb-3">
           <label class="form-label small fw-semibold">Pilih Berkas Excel (.xlsx / .xls)</label>
@@ -214,7 +232,7 @@
   </div>
 </div>
 
-<!-- MODAL SET ROLE (KHUSUS WALI KELAS) -->
+<!-- ================= MODAL ROLE PENGURUS ================= -->
 <div class="modal fade" id="modalRolePengurus" tabindex="-1">
   <div class="modal-dialog modal-sm">
     <div class="modal-content">
@@ -256,7 +274,7 @@
     var session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
     var isWali = (session.role === 'WALI_KELAS');
 
-    // Pastikan tombol aksi hanya tampil jika role adalah WALI_KELAS
+    // Tampilkan tombol aksi hanya untuk Wali Kelas
     var actionDiv = document.getElementById('siswa-btn-actions');
     if (actionDiv) {
       if (isWali) {
@@ -276,7 +294,7 @@
         tbody.innerHTML = '<tr><td colspan="7" class="text-danger text-center py-4">' + res.message + '</td></tr>';
       }
     } catch (e) {
-      tbody.innerHTML = '<tr><td colspan="7" class="text-danger text-center py-4">Gagal memuat data siswa.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" class="text-danger text-center py-4">Gagal memuat data siswa kelas.</td></tr>';
     }
   }
 
@@ -287,7 +305,7 @@
     var isWali = (session.role === 'WALI_KELAS');
 
     if (list.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">Belum ada siswa terdaftar.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">Belum ada siswa terdaftar pada kelas ini.</td></tr>';
       return;
     }
 
@@ -308,13 +326,16 @@
           '<td><span class="badge ' + rBadge + '">' + rLabel + '</span></td>' +
           '<td>' + (s.no_hp || '-') + '</td>' +
           '<td class="text-center">' +
-            '<button class="btn btn-sm btn-outline-info py-0 px-2 me-1" onclick="bukaStudent360(\'' + s.student_id + '\')" title="Lihat Profil Student 360">' +
+            '<button class="btn btn-sm btn-outline-info py-0 px-2 me-1" onclick="bukaStudent360(\'' + s.student_id + '\')" title="Lihat Profil Lengkap Student 360°">' +
               '<i class="fa-solid fa-address-card"></i>' +
             '</button>';
 
-      // HANYA WALI KELAS yang mendapatkan tombol Reset Password, Edit, Ubah Role, dan Hapus
+      // HANYA WALI KELAS yang memiliki tombol Pindah Kelas, Reset Password, Edit, Ubah Role, dan Hapus
       if (isWali) {
         htmlRow += '' +
+          '<button class="btn btn-sm btn-outline-info py-0 px-2 me-1" onclick="bukaModalPindahKelas(\'' + s.student_id + '\', \'' + s.nama_lengkap + '\')" title="Pindahkan ke Kelas Lain">' +
+            '<i class="fa-solid fa-arrow-right-arrow-left"></i>' +
+          '</button>' +
           '<button class="btn btn-sm btn-outline-warning py-0 px-2 me-1" onclick="resetPasswordSiswa(\'' + s.student_id + '\', \'' + s.nama_lengkap + '\', \'' + s.nis + '\')" title="Reset Password">' +
             '<i class="fa-solid fa-key"></i>' +
           '</button>' +
@@ -334,6 +355,7 @@
     });
   }
 
+  // ================= MODAL STUDENT 360° =================
   async function bukaStudent360(studentId) {
     var modalEl = document.getElementById('modalStudent360');
     var contentEl = document.getElementById('student-360-content');
@@ -374,7 +396,7 @@
             '<div class="col-3"><div class="p-2 border rounded bg-white"><small class="text-muted d-block">Kehadiran</small><strong class="text-success fs-5">' + persenHadir + '%</strong><small class="d-block text-muted">(' + pres.H + ' Hadir)</small></div></div>' +
             '<div class="col-3"><div class="p-2 border rounded bg-white"><small class="text-muted d-block">Sakit / Izin</small><strong class="text-warning fs-5">' + (pres.S + pres.I) + '</strong><small class="d-block text-muted">(S:' + pres.S + ' | I:' + pres.I + ')</small></div></div>' +
             '<div class="col-3"><div class="p-2 border rounded bg-white"><small class="text-muted d-block">Alfa</small><strong class="text-danger fs-5">' + pres.A + '</strong><small class="d-block text-muted">Hari</small></div></div>' +
-            '<div class="col-3"><div class="p-2 border rounded bg-white"><small class="text-muted d-block">Poin EWS</small><strong class="text-primary fs-5">' + d.total_poin + '</strong><small class="d-block text-muted">Poin</small></div></div>' +
+            '<div class="col-3"><div class="p-2 border rounded bg-white"><small class="text-muted d-block">Poin Disiplin</small><strong class="text-primary fs-5">' + d.total_poin + '</strong><small class="d-block text-muted">Poin EWS</small></div></div>' +
           '</div>' +
 
           '<div class="row g-3">' +
@@ -411,7 +433,79 @@
         contentEl.innerHTML = '<div class="alert alert-danger py-2 small">' + res.message + '</div>';
       }
     } catch (err) {
-      contentEl.innerHTML = '<div class="alert alert-danger py-2 small">Gagal memuat rincian Student 360.</div>';
+      contentEl.innerHTML = '<div class="alert alert-danger py-2 small">Gagal memuat rincian Student 360°.</div>';
+    }
+  }
+
+  // ================= LOGIKA PINDAH KELAS SISWA =================
+  async function bukaModalPindahKelas(studentId, namaSiswa) {
+    document.getElementById('pk-student-id').value = studentId;
+    document.getElementById('pk-nama-siswa').innerText = namaSiswa;
+
+    var select = document.getElementById('pk-target-class');
+    select.innerHTML = '<option value="">Memuat daftar kelas...</option>';
+    new bootstrap.Modal(document.getElementById('modalPindahKelas')).show();
+
+    var session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
+    var currentClassId = sessionStorage.getItem('SIMKEL_ACTIVE_CLASS_ID');
+
+    try {
+      var res = await postGAS({ action: 'getDaftarKelas', user_id: session.user_id });
+      if (res.status === 'success' && res.data) {
+        select.innerHTML = '';
+        var kelasLain = res.data.filter(function(k) { return k.class_id !== currentClassId; });
+        
+        if (kelasLain.length === 0) {
+          select.innerHTML = '<option value="">Tidak ada kelas lain yang tersedia</option>';
+          document.getElementById('btn-proses-pindah').disabled = true;
+          return;
+        }
+
+        document.getElementById('btn-proses-pindah').disabled = false;
+        kelasLain.forEach(function(k) {
+          var opt = document.createElement('option');
+          opt.value = k.class_id;
+          opt.textContent = k.nama_kelas + ' (' + (k.tahun_ajaran || '2026/2027') + ')';
+          select.appendChild(opt);
+        });
+      }
+    } catch (e) {
+      select.innerHTML = '<option value="">Gagal memuat kelas</option>';
+    }
+  }
+
+  async function prosesPindahKelas() {
+    var studentId = document.getElementById('pk-student-id').value;
+    var targetClassId = document.getElementById('pk-target-class').value;
+
+    if (!targetClassId) {
+      alert('Pilih kelas tujuan terlebih dahulu.');
+      return;
+    }
+
+    var btn = document.getElementById('btn-proses-pindah');
+    btn.innerText = 'Memindahkan...';
+    btn.disabled = true;
+
+    var session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
+    try {
+      var res = await postGAS({
+        action: 'pindahKelasSiswa',
+        user_id: session.user_id,
+        student_id: studentId,
+        target_class_id: targetClassId
+      });
+
+      alert(res.message);
+      if (res.status === 'success') {
+        bootstrap.Modal.getInstance(document.getElementById('modalPindahKelas')).hide();
+        loadTabelSiswa(); // Muat ulang tabel (siswa otomatis keluar dari tampilan kelas aktif ini)
+      }
+    } catch (err) {
+      alert('Gagal memproses pemindahan siswa.');
+    } finally {
+      btn.innerText = 'Konfirmasi Pindah Kelas';
+      btn.disabled = false;
     }
   }
 
@@ -426,7 +520,7 @@
     renderSiswa(filtered);
   }
 
-  // PROTEKSI KETAT WALI KELAS UNTUK FUNGSI TAMBAH SISWA
+  // ================= TAMBAH & EDIT SISWA (KHUSUS WALI KELAS) =================
   function bukaModalTambahSiswa() {
     var session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
     if (session.role !== 'WALI_KELAS') {
@@ -485,7 +579,7 @@
     e.preventDefault();
     var session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
     if (session.role !== 'WALI_KELAS') {
-      alert('Akses Ditolak: Anda tidak memiliki izin menyimpan data siswa.');
+      alert('Akses Ditolak: Anda tidak memiliki wewenang menyimpan data siswa.');
       return;
     }
 
@@ -535,6 +629,7 @@
     }
   }
 
+  // ================= DOWNLOAD TEMPLATE EXCEL =================
   function downloadTemplateSiswa() {
     var session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
     if (session.role !== 'WALI_KELAS') {
@@ -575,6 +670,7 @@
     XLSX.writeFile(workbook, "Template_Import_Siswa_SIMKEL.xlsx");
   }
 
+  // ================= IMPORT EXCEL SISWA =================
   function bukaModalImportSiswa() {
     var session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
     if (session.role !== 'WALI_KELAS') {
@@ -638,6 +734,7 @@
     reader.readAsArrayBuffer(file);
   }
 
+  // ================= RESET PASSWORD SISWA =================
   async function resetPasswordSiswa(studentId, nama, nis) {
     if (!confirm('Reset password untuk siswa ' + nama + ' (NIS: ' + nis + ') menjadi "siswa123"?')) return;
     var session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
@@ -653,6 +750,7 @@
     }
   }
 
+  // ================= JABATAN PENGURUS KELAS =================
   function bukaModalRole(studentId, nama, currentRole) {
     document.getElementById('fr-student-id').value = studentId;
     document.getElementById('fr-nama-siswa').innerText = nama;
@@ -677,6 +775,7 @@
     }
   }
 
+  // ================= HAPUS SISWA =================
   async function hapusSiswa(studentId, nama) {
     if (!confirm('Hapus siswa ' + nama + '?')) return;
     var session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
