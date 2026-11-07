@@ -10,7 +10,7 @@
       </button>
     </div>
 
-    <!-- Nav Tab Hari -->
+    <!-- Nav Tab Pilihan Hari -->
     <ul class="nav nav-pills mb-3" id="pills-hari-piket" role="tablist">
       <li class="nav-item"><button class="nav-link active btn-sm" onclick="filterHariPiket('Senin')">Senin</button></li>
       <li class="nav-item"><button class="nav-link btn-sm" onclick="filterHariPiket('Selasa')">Selasa</button></li>
@@ -32,7 +32,11 @@
           </tr>
         </thead>
         <tbody id="table-piket-body">
-          <tr><td colspan="6" class="text-center text-muted py-4"><div class="spinner-border spinner-border-sm text-primary me-2"></div>Memuat jadwal piket...</td></tr>
+          <tr>
+            <td colspan="6" class="text-center text-muted py-4">
+              <div class="spinner-border spinner-border-sm text-primary me-2"></div>Memuat jadwal piket...
+            </td>
+          </tr>
         </tbody>
       </table>
     </div>
@@ -109,7 +113,7 @@
         filterHariPiket(currentHariPilihan);
       }
     } catch (e) {
-      tbody.innerHTML = '<tr><td colspan="6" class="text-danger text-center">Gagal memuat jadwal piket.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6" class="text-danger text-center py-4">Gagal memuat jadwal piket.</td></tr>';
     }
   }
 
