@@ -181,7 +181,7 @@
     </nav>
   </div>
 
-  <!-- Modal Buat Kelas Baru (Dengan Penugasan Wali Kelas) -->
+  <!-- Modal Buat Kelas Baru -->
   <div class="modal fade" id="modalBuatKelas" tabindex="-1">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -418,6 +418,7 @@
 
       updateSubheaderInfo(classId);
 
+      // Selalu render ulang modul yang aktif
       const activeLink = document.querySelector('#sidebar-nav .nav-link.active');
       const currentMod = activeLink ? activeLink.id.replace('menu-', '') : 'dashboard';
       navigateModule(currentMod);
@@ -521,6 +522,7 @@
       if (bnavKas) bnavKas.style.display = isBendahara ? 'block' : 'none';
     }
 
+    // Dynamic Module Loader dengan percabangan 2 file Dashboard
     async function navigateModule(name) {
       const allMenus = ['dashboard','guru','siswa','presensi','piket','jurnal','kedisiplinan','kas','akademik','pengumuman','pengajuan','inventaris'];
       allMenus.forEach(m => {
@@ -530,8 +532,25 @@
         if (elBnav) elBnav.classList.toggle('active', m === name);
       });
 
+      const session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
+      const activeClassId = (sessionStorage.getItem('SIMKEL_ACTIVE_CLASS_ID') || '').toString().trim();
+      const isKurikulum = (session.role === 'KURIKULUM' || session.role === 'ADMIN');
+
+      // Tentukan target file HTML yang dimuat
+      let targetFile = `components/menu-${name}.html`;
+      let headerText = name.toUpperCase();
+
+      if (name === 'dashboard') {
+        if (isKurikulum && (!activeClassId || activeClassId === 'ALL')) {
+          targetFile = 'components/menu-dashboard-sekolah.html';
+          headerText = 'DASHBOARD UTAMA KURIKULUM';
+        } else {
+          targetFile = 'components/menu-dashboard-kelas.html';
+          headerText = 'DASHBOARD OPERASIONAL KELAS';
+        }
+      }
+
       const titleMap = {
-        'dashboard': 'DASHBOARD',
         'guru': 'MANAJEMEN AKUN GURU & WALI KELAS',
         'siswa': 'DATA SISWA',
         'presensi': 'PRESENSI HARIAN MASSAL',
@@ -544,14 +563,14 @@
         'pengajuan': 'PENGAJUAN IZIN & DISPEN',
         'inventaris': 'INVENTARIS KELAS'
       };
-      document.getElementById('header-title').innerText = titleMap[name] || name.toUpperCase();
+      document.getElementById('header-title').innerText = titleMap[name] || headerText;
 
       const container = document.getElementById('dynamic-content-container');
       container.innerHTML = `<div class="text-center py-5 text-muted"><div class="spinner-border spinner-border-sm text-primary me-2"></div>Memuat modul ${name}...</div>`;
 
       try {
-        const response = await fetch(`components/menu-${name}.html`);
-        if (!response.ok) throw new Error(`Berkas components/menu-${name}.html belum diunggah.`);
+        const response = await fetch(targetFile);
+        if (!response.ok) throw new Error(`Berkas ${targetFile} belum diunggah.`);
         const html = await response.text();
         container.innerHTML = html;
 
