@@ -10,7 +10,7 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- SheetJS untuk Export / Import Excel -->
+  <!-- SheetJS -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
     :root {
@@ -22,121 +22,59 @@
     body {
       background-color: var(--bg-canvas);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      margin: 0;
-      padding: 0;
+      margin: 0; padding: 0;
     }
-    /* Sidebar Desktop */
     .simkel-sidebar {
       background-color: var(--primary-navy);
-      width: 260px;
-      height: 100vh;
-      position: fixed;
-      top: 0;
-      left: 0;
-      z-index: 1020;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      padding: 1.25rem 0.75rem;
-      overflow-y: auto;
+      width: 260px; height: 100vh; position: fixed;
+      top: 0; left: 0; z-index: 1020;
+      display: flex; flex-direction: column; justify-content: space-between;
+      padding: 1.25rem 0.75rem; overflow-y: auto;
     }
     .simkel-sidebar .nav-link {
-      color: #94A3B8;
-      font-weight: 500;
-      padding: 0.65rem 0.85rem;
-      border-radius: 0.5rem;
-      margin-bottom: 0.2rem;
-      transition: all 0.2s ease;
-      cursor: pointer;
-      text-decoration: none;
-      display: block;
-      font-size: 0.9rem;
+      color: #94A3B8; font-weight: 500;
+      padding: 0.65rem 0.85rem; border-radius: 0.5rem;
+      margin-bottom: 0.2rem; transition: all 0.2s ease;
+      cursor: pointer; text-decoration: none; display: block; font-size: 0.9rem;
     }
-    .simkel-sidebar .nav-link:hover,
-    .simkel-sidebar .nav-link.active {
-      color: #FFFFFF;
-      background-color: var(--accent-blue);
+    .simkel-sidebar .nav-link:hover, .simkel-sidebar .nav-link.active {
+      color: #FFFFFF; background-color: var(--accent-blue);
     }
-    /* Konten Utama */
     .simkel-main {
-      margin-left: 260px;
-      padding: 2rem;
-      min-height: 100vh;
+      margin-left: 260px; padding: 2rem; min-height: 100vh;
     }
     .card-kpi {
-      border: none;
-      border-radius: 0.75rem;
+      border: none; border-radius: 0.75rem;
       box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-      background: #FFFFFF;
-      padding: 1.25rem;
+      background: #FFFFFF; padding: 1.25rem;
     }
-    /* Radio Button Presensi */
-    .btn-check:checked + .btn-outline-success { background-color: #16A34A; color: #fff; }
-    .btn-check:checked + .btn-outline-warning { background-color: #D97706; color: #fff; }
-    .btn-check:checked + .btn-outline-info { background-color: #0284C7; color: #fff; }
-    .btn-check:checked + .btn-outline-danger { background-color: #DC2626; color: #fff; }
-
-    /* Input Password Minimalis dengan Toggle Mata */
-    .password-wrapper {
-      position: relative;
-    }
+    .password-wrapper { position: relative; }
     .password-toggle-btn {
-      position: absolute;
-      right: 0;
-      top: 0;
-      bottom: 0;
-      width: 44px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: none;
-      border: none;
-      color: var(--text-muted);
-      cursor: pointer;
-      padding: 0;
-      font-size: 0.95rem;
-      z-index: 5;
-      -webkit-tap-highlight-color: transparent;
+      position: absolute; right: 0; top: 0; bottom: 0;
+      width: 44px; display: flex; align-items: center; justify-content: center;
+      background: none; border: none; color: var(--text-muted); cursor: pointer;
+      font-size: 0.95rem; z-index: 5; -webkit-tap-highlight-color: transparent;
     }
-    .password-toggle-btn:hover,
-    .password-toggle-btn:focus {
-      color: var(--primary-navy);
-      outline: none;
-    }
-
-    /* Tampilan HP / Layar Kecil */
+    .password-toggle-btn:hover { color: var(--primary-navy); }
     @media (max-width: 768px) {
       .simkel-sidebar { display: none; }
       .simkel-main { margin-left: 0; padding: 1rem; margin-bottom: 80px; }
       .simkel-bottom-nav {
-        display: flex;
-        position: fixed;
-        bottom: 0; left: 0; right: 0;
-        background: #FFFFFF;
-        border-top: 1px solid #E2E8F0;
-        justify-content: space-around;
-        padding: 0.5rem 0;
-        z-index: 1030;
+        display: flex; position: fixed; bottom: 0; left: 0; right: 0;
+        background: #FFFFFF; border-top: 1px solid #E2E8F0;
+        justify-content: space-around; padding: 0.5rem 0; z-index: 1030;
       }
       .simkel-bottom-nav a {
-        text-align: center;
-        color: var(--text-muted);
-        text-decoration: none;
-        font-size: 0.75rem;
+        text-align: center; color: var(--text-muted); text-decoration: none; font-size: 0.75rem;
       }
-      .simkel-bottom-nav a.active {
-        color: var(--accent-blue);
-        font-weight: 600;
-      }
+      .simkel-bottom-nav a.active { color: var(--accent-blue); font-weight: 600; }
     }
-    @media (min-width: 769px) {
-      .simkel-bottom-nav { display: none; }
-    }
+    @media (min-width: 769px) { .simkel-bottom-nav { display: none; } }
   </style>
 </head>
 <body>
 
-  <!-- Layar Login Pengguna -->
+  <!-- Layar Login -->
   <div id="login-view" class="container d-flex align-items-center justify-content-center min-vh-100">
     <div class="card p-4 shadow border-0" style="max-width: 380px; width: 100%; border-radius: 1rem;">
       <div class="text-center mb-4">
@@ -151,14 +89,14 @@
 
       <form id="login-form" onsubmit="handleLogin(event)">
         <div class="mb-3">
-          <label class="form-label small fw-semibold text-secondary">Username (Admin atau NIS)</label>
-          <input type="text" id="login-username" class="form-control" required placeholder="admin / NIS">
+          <label class="form-label small fw-semibold text-secondary">Username (Admin / Guru / NIS)</label>
+          <input type="text" id="login-username" class="form-control" required placeholder="Username Anda">
         </div>
         <div class="mb-3">
           <label class="form-label small fw-semibold text-secondary">Password</label>
           <div class="password-wrapper">
             <input type="password" id="login-password" class="form-control pe-5" required placeholder="masukan pasword disini">
-            <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('login-password', this)" title="Lihat/Sembunyikan Password">
+            <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('login-password', this)">
               <i class="fa-regular fa-eye"></i>
             </button>
           </div>
@@ -172,7 +110,6 @@
 
   <!-- Shell Aplikasi Utama -->
   <div id="app-view" style="display: none;">
-    <!-- Sidebar Desktop -->
     <aside class="simkel-sidebar">
       <div>
         <div class="d-flex align-items-center mb-4 px-2 text-white">
@@ -203,7 +140,6 @@
       </div>
     </aside>
 
-    <!-- Konten Utama Dinamis -->
     <main class="simkel-main">
       <header class="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-2 border-bottom gap-2">
         <div>
@@ -211,22 +147,22 @@
           <small class="text-muted" id="header-subtitle">Ringkasan analitik dan administrasi kelas</small>
         </div>
 
-        <!-- Pemilih Kelas Aktif (Multi-Classroom Selector) -->
+        <!-- Selector Kelas Aktif -->
         <div class="d-flex align-items-center gap-2">
           <div id="wali-class-selector-box" style="display: none;" class="d-flex align-items-center gap-2">
             <label class="small fw-semibold text-muted mb-0"><i class="fa-solid fa-chalkboard me-1"></i>Kelas:</label>
-            <select id="select-active-class" class="form-select form-select-sm" style="width: 170px;" onchange="gantiKelasAktif(this.value)">
-              <option value="">Pilih Kelas</option>
+            <select id="select-active-class" class="form-select form-select-sm" style="width: 180px;" onchange="gantiKelasAktif(this.value)">
+              <option value="">Memuat Kelas...</option>
             </select>
-            <button class="btn btn-outline-primary btn-sm" onclick="bukaModalBuatKelas()" title="Buat Kelas Baru">
-              <i class="fa-solid fa-plus"></i>
+            <!-- Tombol Buat Kelas HANYA untuk KURIKULUM -->
+            <button id="btn-tambah-kelas-kurikulum" class="btn btn-primary btn-sm" style="display: none;" onclick="bukaModalBuatKelas()" title="Buat Ruang Kelas Baru">
+              <i class="fa-solid fa-plus me-1"></i> Buat Kelas
             </button>
           </div>
-          <span id="role-badge" class="badge bg-dark px-3 py-2">Role: Wali Kelas</span>
+          <span id="role-badge" class="badge bg-dark px-3 py-2">Role: -</span>
         </div>
       </header>
 
-      <!-- Tempat render komponen modul dinamis -->
       <div id="dynamic-content-container">
         <div class="text-center py-5 text-muted">
           <div class="spinner-border spinner-border-sm text-primary me-2"></div>Memuat modul...
@@ -244,19 +180,19 @@
     </nav>
   </div>
 
-  <!-- Modal Buat Kelas Baru (Khusus Wali Kelas) -->
+  <!-- Modal Buat Kelas Baru (Dengan Penentuan Wali Kelas) -->
   <div class="modal fade" id="modalBuatKelas" tabindex="-1">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header bg-primary text-white">
-          <h6 class="modal-title fw-bold"><i class="fa-solid fa-chalkboard-user me-2"></i>Buat Ruang Kelas Baru</h6>
+          <h6 class="modal-title fw-bold"><i class="fa-solid fa-chalkboard-user me-2"></i>Buat Kelas & Tetapkan Wali Kelas</h6>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body p-3">
           <form id="form-buat-kelas" onsubmit="submitBuatKelas(event)">
             <div class="mb-2">
               <label class="form-label small fw-semibold">Nama Kelas</label>
-              <input type="text" id="mk-nama" class="form-control form-control-sm" required placeholder="Contoh: X-1 / XII-MIPA 2">
+              <input type="text" id="mk-nama" class="form-control form-control-sm" required placeholder="Contoh: X-1 / XI-F2">
             </div>
             <div class="row g-2 mb-2">
               <div class="col-6">
@@ -272,19 +208,25 @@
                 <input type="text" id="mk-ta" class="form-control form-control-sm" value="2026/2027" required>
               </div>
             </div>
-            <button type="submit" id="btn-save-mk" class="btn btn-primary btn-sm w-100 mt-2">Buat & Masuk ke Kelas Ini</button>
+            <div class="mb-3">
+              <label class="form-label small fw-semibold">Tetapkan Wali Kelas</label>
+              <select id="mk-wali-id" class="form-select form-select-sm" required>
+                <option value="">Memuat daftar guru...</option>
+              </select>
+            </div>
+            <button type="submit" id="btn-save-mk" class="btn btn-primary btn-sm w-100 mt-2">Buat & Simpan Kelas</button>
           </form>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Modal Ubah Password Mandiri -->
+  <!-- Modal Ubah Password -->
   <div class="modal fade" id="modalGantiPassword" tabindex="-1">
     <div class="modal-dialog modal-sm">
       <div class="modal-content">
         <div class="modal-header bg-dark text-white">
-          <h6 class="modal-title fw-bold"><i class="fa-solid fa-key me-2"></i>Ubah Password</h6>
+          <h6 class="modal-title fw-bold">Ubah Password</h6>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body p-3">
@@ -293,18 +235,14 @@
               <label class="form-label small fw-semibold">Password Lama</label>
               <div class="password-wrapper">
                 <input type="password" id="gp-old" class="form-control form-control-sm pe-5" required placeholder="masukan pasword disini">
-                <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('gp-old', this)">
-                  <i class="fa-regular fa-eye"></i>
-                </button>
+                <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('gp-old', this)"><i class="fa-regular fa-eye"></i></button>
               </div>
             </div>
             <div class="mb-3">
               <label class="form-label small fw-semibold">Password Baru (min 6 digit)</label>
               <div class="password-wrapper">
                 <input type="password" id="gp-new" class="form-control form-control-sm pe-5" minlength="6" required placeholder="masukan pasword disini">
-                <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('gp-new', this)">
-                  <i class="fa-regular fa-eye"></i>
-                </button>
+                <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('gp-new', this)"><i class="fa-regular fa-eye"></i></button>
               </div>
             </div>
             <button type="submit" id="btn-save-gp" class="btn btn-primary btn-sm w-100">Simpan Password Baru</button>
@@ -314,15 +252,12 @@
     </div>
   </div>
 
-  <!-- Bootstrap JS Bundle -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-  <!-- Script Global Engine, Multi-Kelas, Cache & Router -->
   <script>
     const API_ENDPOINT = 'https://script.google.com/macros/s/AKfycbxzaCXr0j0-KtMQaWK7tkHseJzjq95MBH-h9DU403jbCGF6D8131-s6zwmpLvgiIjoW/exec';
     const SIMKEL_CACHE = {};
 
-    // 1. INJEKSI OTOMATIS class_id AKTIF & ACCELERATION CACHE (TTL: 3 MENIT)
     async function postGAS(payload, useCache = false) {
       const activeClassId = sessionStorage.getItem('SIMKEL_ACTIVE_CLASS_ID') || '';
       if (!payload.class_id && activeClassId) {
@@ -351,23 +286,17 @@
       for (const k in SIMKEL_CACHE) delete SIMKEL_CACHE[k];
     }
 
-    // 2. TOGGLE PASSWORD MINIMALIS
     function togglePasswordVisibility(inputId, btnEl) {
       const input = document.getElementById(inputId);
       const icon = btnEl.querySelector('i');
       if (!input || !icon) return;
       if (input.type === 'password') {
-        input.type = 'text';
-        icon.classList.remove('fa-eye');
-        icon.classList.add('fa-eye-slash');
+        input.type = 'text'; icon.classList.remove('fa-eye'); icon.classList.add('fa-eye-slash');
       } else {
-        input.type = 'password';
-        icon.classList.remove('fa-eye-slash');
-        icon.classList.add('fa-eye');
+        input.type = 'password'; icon.classList.remove('fa-eye-slash'); icon.classList.add('fa-eye');
       }
     }
 
-    // 3. AUTENTIKASI LOGIN
     async function handleLogin(e) {
       e.preventDefault();
       const u = document.getElementById('login-username').value.trim();
@@ -375,8 +304,7 @@
       const btn = document.getElementById('login-btn');
       const alertBox = document.getElementById('login-alert');
 
-      btn.innerText = 'Memverifikasi...';
-      btn.disabled = true;
+      btn.innerText = 'Memverifikasi...'; btn.disabled = true;
       alertBox.classList.add('d-none');
 
       try {
@@ -392,15 +320,13 @@
           alertBox.classList.remove('d-none');
         }
       } catch (err) {
-        alertBox.innerText = 'Gagal terhubung ke backend. Pastikan Apps Script berstatus Active.';
+        alertBox.innerText = 'Gagal terhubung ke server Apps Script.';
         alertBox.classList.remove('d-none');
       } finally {
-        btn.innerText = 'Masuk Sistem';
-        btn.disabled = false;
+        btn.innerText = 'Masuk Sistem'; btn.disabled = false;
       }
     }
 
-    // 4. RENDER APP SHELL
     function renderAppShell(sessionData) {
       const loginView = document.getElementById('login-view');
       const appView = document.getElementById('app-view');
@@ -414,29 +340,31 @@
       }
 
       const role = sessionData.role || 'SISWA';
-      const roleBadge = document.getElementById('role-badge');
-      if (roleBadge) roleBadge.innerText = 'Role: ' + role;
+      const isKurikulum = (role === 'KURIKULUM' || role === 'ADMIN');
+      const isWali = (role === 'WALI_KELAS');
 
+      document.getElementById('role-badge').innerText = 'Role: ' + (isKurikulum ? 'Kurikulum' : (isWali ? 'Wali Kelas' : role));
       applyRBACVisibility(role);
 
-      if (role === 'WALI_KELAS') {
-        const selectorBox = document.getElementById('wali-class-selector-box');
+      // Konfigurasi Selector Kelas
+      const selectorBox = document.getElementById('wali-class-selector-box');
+      const btnTambahKelas = document.getElementById('btn-tambah-kelas-kurikulum');
+
+      if (isKurikulum || isWali) {
         if (selectorBox) selectorBox.style.display = 'flex';
-        loadDaftarKelasWali(sessionData.user_id);
+        if (btnTambahKelas) btnTambahKelas.style.display = isKurikulum ? 'inline-block' : 'none';
+        loadDaftarKelas(sessionData.user_id);
       } else {
-        const selectorBox = document.getElementById('wali-class-selector-box');
         if (selectorBox) selectorBox.style.display = 'none';
         if (sessionData.nama_kelas) {
-          const subTitle = document.getElementById('header-subtitle');
-          if (subTitle) subTitle.innerText = 'Kelas Aktif: ' + sessionData.nama_kelas;
+          document.getElementById('header-subtitle').innerText = 'Kelas: ' + sessionData.nama_kelas;
         }
       }
 
       navigateModule('dashboard');
     }
 
-    // 5. MANAJEMEN MULTI-KELAS (WALI KELAS)
-    async function loadDaftarKelasWali(userId) {
+    async function loadDaftarKelas(userId) {
       const select = document.getElementById('select-active-class');
       if (!select) return;
 
@@ -446,23 +374,23 @@
           select.innerHTML = '';
           if (res.data.length === 0) {
             select.innerHTML = '<option value="">Belum Ada Kelas</option>';
-            bukaModalBuatKelas();
             return;
           }
 
           res.data.forEach(k => {
             const opt = document.createElement('option');
-            opt.value = k.class_id;
+            opt.value = (k.class_id || '').toString().trim();
             opt.textContent = `${k.nama_kelas} (${k.tahun_ajaran || '2026/2027'})`;
             select.appendChild(opt);
           });
 
-          const savedClass = sessionStorage.getItem('SIMKEL_ACTIVE_CLASS_ID');
-          if (savedClass && res.data.some(k => k.class_id === savedClass)) {
+          const savedClass = (sessionStorage.getItem('SIMKEL_ACTIVE_CLASS_ID') || '').toString().trim();
+          if (savedClass && res.data.some(k => (k.class_id || '').toString().trim() === savedClass)) {
             select.value = savedClass;
           } else {
-            select.value = res.data[0].class_id;
-            sessionStorage.setItem('SIMKEL_ACTIVE_CLASS_ID', res.data[0].class_id);
+            const firstClassId = (res.data[0].class_id || '').toString().trim();
+            select.value = firstClassId;
+            sessionStorage.setItem('SIMKEL_ACTIVE_CLASS_ID', firstClassId);
           }
 
           const subTitle = document.getElementById('header-subtitle');
@@ -477,7 +405,7 @@
 
     function gantiKelasAktif(classId) {
       if (!classId) return;
-      sessionStorage.setItem('SIMKEL_ACTIVE_CLASS_ID', classId);
+      sessionStorage.setItem('SIMKEL_ACTIVE_CLASS_ID', classId.toString().trim());
       invalidateCache();
 
       const select = document.getElementById('select-active-class');
@@ -486,22 +414,34 @@
         subTitle.innerText = 'Mengelola: ' + select.options[select.selectedIndex].text;
       }
 
-      // Render ulang modul yang sedang aktif sesuai kelas baru
       const activeLink = document.querySelector('#sidebar-nav .nav-link.active');
       const currentMod = activeLink ? activeLink.id.replace('menu-', '') : 'dashboard';
       navigateModule(currentMod);
     }
 
-    function bukaModalBuatKelas() {
+    async function bukaModalBuatKelas() {
       document.getElementById('form-buat-kelas').reset();
+      const selectWali = document.getElementById('mk-wali-id');
+      selectWali.innerHTML = '<option value="">Memuat daftar guru...</option>';
       new bootstrap.Modal(document.getElementById('modalBuatKelas')).show();
+
+      try {
+        const res = await postGAS({ action: 'getDaftarGuruWali' });
+        if (res.status === 'success' && res.data) {
+          selectWali.innerHTML = '<option value="">-- Tetapkan Wali Kelas --</option>';
+          res.data.forEach(g => {
+            selectWali.innerHTML += `<option value="${g.user_id}">${g.username} (${g.role})</option>`;
+          });
+        }
+      } catch (e) {
+        selectWali.innerHTML = '<option value="">Gagal memuat guru</option>';
+      }
     }
 
     async function submitBuatKelas(e) {
       e.preventDefault();
       const btn = document.getElementById('btn-save-mk');
-      btn.innerText = 'Membuat...';
-      btn.disabled = true;
+      btn.innerText = 'Membuat...'; btn.disabled = true;
 
       const session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
       try {
@@ -511,7 +451,8 @@
           payload: {
             nama_kelas: document.getElementById('mk-nama').value.trim(),
             tingkat: document.getElementById('mk-tingkat').value,
-            tahun_ajaran: document.getElementById('mk-ta').value.trim()
+            tahun_ajaran: document.getElementById('mk-ta').value.trim(),
+            wali_kelas_id: document.getElementById('mk-wali-id').value
           }
         });
 
@@ -520,23 +461,23 @@
           sessionStorage.setItem('SIMKEL_ACTIVE_CLASS_ID', res.class_id);
           invalidateCache();
           bootstrap.Modal.getInstance(document.getElementById('modalBuatKelas')).hide();
-          await loadDaftarKelasWali(session.user_id);
+          await loadDaftarKelas(session.user_id);
           navigateModule('dashboard');
         }
       } catch (err) {
         alert('Gagal membuat kelas baru.');
       } finally {
-        btn.innerText = 'Buat & Masuk ke Kelas Ini';
-        btn.disabled = false;
+        btn.innerText = 'Buat & Simpan Kelas'; btn.disabled = false;
       }
     }
 
-    // 6. RBAC PERAN
     function applyRBACVisibility(role) {
-      const isWali = (role === 'WALI_KELAS');
+      const isKurikulum = (role === 'KURIKULUM' || role === 'ADMIN');
+      const isWali = (role === 'WALI_KELAS' || isKurikulum);
       const isBendahara = (role === 'BENDAHARA' || isWali);
       const isPengurus = (role === 'KETUA_KELAS' || role === 'SEKRETARIS' || isBendahara);
 
+      // Seluruh modul terbuka penuh untuk Kurikulum & Wali Kelas
       const mPres = document.getElementById('menu-presensi');
       const mJur = document.getElementById('menu-jurnal');
       const mDis = document.getElementById('menu-kedisiplinan');
@@ -559,7 +500,6 @@
       if (bnavKas) bnavKas.style.display = isBendahara ? 'block' : 'none';
     }
 
-    // 7. ROUTER DINAMIS
     async function navigateModule(name) {
       const allMenus = ['dashboard','siswa','presensi','piket','jurnal','kedisiplinan','kas','akademik','pengumuman','pengajuan','inventaris'];
       allMenus.forEach(m => {
@@ -570,17 +510,11 @@
       });
 
       const titleMap = {
-        'dashboard': 'DASHBOARD',
-        'siswa': 'DATA SISWA',
-        'presensi': 'PRESENSI HARIAN MASSAL',
-        'piket': 'JADWAL PIKET KELAS',
-        'jurnal': 'JURNAL & AGENDA KELAS',
-        'kedisiplinan': 'KEDISIPLINAN & EWS',
-        'kas': 'KAS & KEUANGAN KELAS',
-        'akademik': 'MONITORING NILAI',
-        'pengumuman': 'PENGUMUMAN KELAS',
-        'pengajuan': 'PENGAJUAN IZIN & DISPEN',
-        'inventaris': 'INVENTARIS KELAS'
+        'dashboard': 'DASHBOARD', 'siswa': 'DATA SISWA', 'presensi': 'PRESENSI HARIAN MASSAL',
+        'piket': 'JADWAL PIKET KELAS', 'jurnal': 'JURNAL & AGENDA KELAS',
+        'kedisiplinan': 'KEDISIPLINAN & EWS', 'kas': 'KAS & KEUANGAN KELAS',
+        'akademik': 'MONITORING NILAI', 'pengumuman': 'PENGUMUMAN KELAS',
+        'pengajuan': 'PENGAJUAN IZIN & DISPEN', 'inventaris': 'INVENTARIS KELAS'
       };
       document.getElementById('header-title').innerText = titleMap[name] || name.toUpperCase();
 
@@ -593,7 +527,6 @@
         const html = await response.text();
         container.innerHTML = html;
 
-        // Eksekusi skrip internal modul
         const scripts = container.querySelectorAll("script");
         scripts.forEach(s => {
           const newScript = document.createElement("script");
@@ -605,7 +538,6 @@
       }
     }
 
-    // 8. GANTI PASSWORD MANDIRI
     function bukaModalGantiPassword() {
       document.getElementById('form-ganti-password').reset();
       new bootstrap.Modal(document.getElementById('modalGantiPassword')).show();
@@ -614,9 +546,7 @@
     async function submitGantiPassword(e) {
       e.preventDefault();
       const btn = document.getElementById('btn-save-gp');
-      btn.innerText = 'Menyimpan...';
-      btn.disabled = true;
-
+      btn.innerText = 'Menyimpan...'; btn.disabled = true;
       const session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
       try {
         const res = await postGAS({
@@ -625,7 +555,6 @@
           new_password: document.getElementById('gp-new').value.trim(),
           user_id: session.user_id
         });
-
         alert(res.message);
         if (res.status === 'success') {
           bootstrap.Modal.getInstance(document.getElementById('modalGantiPassword')).hide();
@@ -633,12 +562,10 @@
       } catch (err) {
         alert('Gagal menghubungi server.');
       } finally {
-        btn.innerText = 'Simpan Password Baru';
-        btn.disabled = false;
+        btn.innerText = 'Simpan Password Baru'; btn.disabled = false;
       }
     }
 
-    // 9. LOGOUT
     function handleLogout() {
       sessionStorage.removeItem('SIMKEL_SESSION');
       sessionStorage.removeItem('SIMKEL_ACTIVE_CLASS_ID');
@@ -653,7 +580,6 @@
       document.getElementById('login-form').reset();
     }
 
-    // 10. AUTO-LOGIN
     window.addEventListener('DOMContentLoaded', () => {
       const savedSession = sessionStorage.getItem('SIMKEL_SESSION');
       if (savedSession) {
