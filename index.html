@@ -148,7 +148,7 @@
           <small class="text-muted" id="header-subtitle">Ringkasan analitik dan administrasi kelas</small>
         </div>
 
-        <!-- Selector Kelas Aktif -->
+        <!-- Selector Kelas Aktif & Info Wali Kelas -->
         <div class="d-flex align-items-center gap-2">
           <div id="wali-class-selector-box" style="display: none;" class="d-flex align-items-center gap-2">
             <label class="small fw-semibold text-muted mb-0"><i class="fa-solid fa-chalkboard me-1"></i>Kelas:</label>
@@ -181,7 +181,7 @@
     </nav>
   </div>
 
-  <!-- Modal Buat Kelas Baru (Dengan Penentuan Wali Kelas) -->
+  <!-- Modal Buat Kelas Baru (Dengan Penugasan Wali Kelas) -->
   <div class="modal fade" id="modalBuatKelas" tabindex="-1">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -258,6 +258,7 @@
   <script>
     const API_ENDPOINT = 'https://script.google.com/macros/s/AKfycbxzaCXr0j0-KtMQaWK7tkHseJzjq95MBH-h9DU403jbCGF6D8131-s6zwmpLvgiIjoW/exec';
     const SIMKEL_CACHE = {};
+    var cacheDaftarKelasGlobal = [];
 
     async function postGAS(payload, useCache = false) {
       const activeClassId = sessionStorage.getItem('SIMKEL_ACTIVE_CLASS_ID') || '';
@@ -371,6 +372,7 @@
       try {
         const res = await postGAS({ action: 'getDaftarKelas', user_id: userId });
         if (res && res.status === 'success' && Array.isArray(res.data)) {
+          cacheDaftarKelasGlobal = res.data;
           select.innerHTML = '';
           if (res.data.length === 0) {
             select.innerHTML = '<option value="">Belum Ada Kelas</option>';
@@ -393,10 +395,7 @@
             sessionStorage.setItem('SIMKEL_ACTIVE_CLASS_ID', firstClassId);
           }
 
-          const subTitle = document.getElementById('header-subtitle');
-          if (subTitle && select.selectedIndex >= 0) {
-            subTitle.innerText = 'Mengelola: ' + select.options[select.selectedIndex].text;
-          }
+          updateSubheaderInfo(select.value);
         }
       } catch (err) {
         console.warn('Gagal memuat list kelas:', err);
@@ -408,15 +407,20 @@
       sessionStorage.setItem('SIMKEL_ACTIVE_CLASS_ID', classId.toString().trim());
       invalidateCache();
 
-      const select = document.getElementById('select-active-class');
-      const subTitle = document.getElementById('header-subtitle');
-      if (subTitle && select && select.selectedIndex >= 0) {
-        subTitle.innerText = 'Mengelola: ' + select.options[select.selectedIndex].text;
-      }
+      updateSubheaderInfo(classId);
 
       const activeLink = document.querySelector('#sidebar-nav .nav-link.active');
       const currentMod = activeLink ? activeLink.id.replace('menu-', '') : 'dashboard';
       navigateModule(currentMod);
+    }
+
+    function updateSubheaderInfo(classId) {
+      const subTitle = document.getElementById('header-subtitle');
+      if (!subTitle) return;
+      const k = cacheDaftarKelasGlobal.find(x => (x.class_id || '').toString().trim() === (classId || '').toString().trim());
+      if (k) {
+        subTitle.innerHTML = `<span class="fw-semibold text-primary"><i class="fa-solid fa-chalkboard me-1"></i>Kelas: ${k.nama_kelas}</span> &bull; Wali Kelas: <strong>${k.nama_wali || 'Belum Ditentukan'}</strong>`;
+      }
     }
 
     async function bukaModalBuatKelas() {
