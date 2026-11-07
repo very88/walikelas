@@ -2,8 +2,8 @@
   <div class="card card-kpi">
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
       <div>
-        <h6 class="fw-bold mb-0 text-primary"><i class="fa-solid fa-chalkboard-user me-2"></i>Manajemen Akun Guru & Wali Kelas</h6>
-        <small class="text-muted">Kelola akun pengajar, otorisasi peran, dan penugasan wali kelas</small>
+        <h6 class="fw-bold mb-0 text-primary"><i class="fa-solid fa-chalkboard-user me-2"></i>Manajemen Guru & Penetapan Wali Kelas</h6>
+        <small class="text-muted">Kelola akun guru dan atur kelas binaan untuk masing-masing wali kelas</small>
       </div>
       <button class="btn btn-primary btn-sm" onclick="bukaModalTambahGuru()">
         <i class="fa-solid fa-user-plus me-1"></i> Tambah Akun Guru
@@ -25,7 +25,7 @@
         <tbody id="table-guru-body">
           <tr>
             <td colspan="6" class="text-center text-muted py-4">
-              <div class="spinner-border spinner-border-sm text-primary me-2"></div>Memuat daftar pengajar...
+              <div class="spinner-border spinner-border-sm text-primary me-2"></div>Memuat daftar guru...
             </td>
           </tr>
         </tbody>
@@ -34,7 +34,7 @@
   </div>
 </section>
 
-<!-- Modal Tambah / Edit Guru -->
+<!-- Modal Tambah / Edit Guru & Penugasan Kelas -->
 <div class="modal fade" id="modalGuru" tabindex="-1">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -54,9 +54,17 @@
           <div class="mb-2">
             <label class="form-label small fw-semibold">Peran (Role)</label>
             <select id="fg-role" class="form-select form-select-sm">
-              <option value="WALI_KELAS">Wali Kelas (Mengelola kelas binaan)</option>
-              <option value="KURIKULUM">Kurikulum (Koordinator seluruh kelas)</option>
+              <option value="WALI_KELAS">Wali Kelas</option>
+              <option value="KURIKULUM">Kurikulum (Koordinator)</option>
             </select>
+          </div>
+
+          <div class="mb-2">
+            <label class="form-label small fw-semibold">Tugaskan sebagai Wali Kelas:</label>
+            <select id="fg-kelas-binaan" class="form-select form-select-sm">
+              <option value="">-- Tidak Mengampu Kelas --</option>
+            </select>
+            <small class="text-muted" style="font-size: 0.75rem;">Pilih kelas yang akan dikelola oleh guru ini</small>
           </div>
 
           <div class="mb-3">
@@ -65,7 +73,7 @@
           </div>
 
           <button type="submit" id="btn-save-guru" class="btn btn-primary btn-sm w-100">
-            <i class="fa-solid fa-floppy-disk me-1"></i> Simpan Akun Guru
+            <i class="fa-solid fa-floppy-disk me-1"></i> Simpan Data & Penugasan Kelas
           </button>
         </form>
       </div>
@@ -75,12 +83,18 @@
 
 <script>
   var dataGuruList = [];
+  var dataKelasPilihan = [];
 
   async function loadTabelGuru() {
     var tbody = document.getElementById('table-guru-body');
     var session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
 
     try {
+      var resK = await postGAS({ action: 'getDaftarKelas', user_id: session.user_id });
+      if (resK.status === 'success') {
+        dataKelasPilihan = resK.data || [];
+      }
+
       var res = await postGAS({ action: 'getDataGuru', user_id: session.user_id });
       if (res.status === 'success') {
         dataGuruList = res.data || [];
@@ -113,13 +127,13 @@
           '<td>' + (idx + 1) + '</td>' +
           '<td class="fw-bold text-dark">' + g.username + (isSelf ? ' <span class="badge bg-secondary ms-1">Anda</span>' : '') + '</td>' +
           '<td><span class="badge ' + rBadge + '">' + rLabel + '</span></td>' +
-          '<td><span class="text-secondary small">' + g.kelas_binaan + '</span></td>' +
+          '<td><span class="text-primary fw-semibold small"><i class="fa-solid fa-chalkboard me-1"></i>' + g.kelas_binaan + '</span></td>' +
           '<td><small class="text-muted">' + (g.created_at || '').toString().slice(0, 10) + '</small></td>' +
           '<td class="text-center">' +
             '<button class="btn btn-sm btn-outline-warning py-0 px-2 me-1" onclick="resetPasswordGuru(\'' + g.user_id + '\', \'' + g.username + '\')" title="Reset Password ke guru123">' +
               '<i class="fa-solid fa-key"></i>' +
             '</button>' +
-            '<button class="btn btn-sm btn-outline-primary py-0 px-2 me-1" onclick="bukaModalEditGuru(\'' + g.user_id + '\')" title="Edit Akun">' +
+            '<button class="btn btn-sm btn-outline-primary py-0 px-2 me-1" onclick="bukaModalEditGuru(\'' + g.user_id + '\')" title="Edit & Atur Kelas">' +
               '<i class="fa-solid fa-pen-to-square"></i>' +
             '</button>';
 
@@ -137,10 +151,25 @@
     });
   }
 
+  function isiDropdownKelasBinaan(selectedClassId) {
+    var sel = document.getElementById('fg-kelas-binaan');
+    sel.innerHTML = '<option value="">-- Tidak Mengampu Kelas --</option>';
+    dataKelasPilihan.forEach(function(k) {
+      var opt = document.createElement('option');
+      opt.value = (k.class_id || '').toString().trim();
+      opt.textContent = `${k.nama_kelas} (${k.tahun_ajaran || '2026/2027'})`;
+      if (selectedClassId && opt.value === selectedClassId.toString().trim()) {
+        opt.selected = true;
+      }
+      sel.appendChild(opt);
+    });
+  }
+
   function bukaModalTambahGuru() {
     document.getElementById('form-guru').reset();
     document.getElementById('fg-user-id').value = '';
     document.getElementById('fg-pass-note').innerText = '(Default: guru123)';
+    isiDropdownKelasBinaan('');
     document.getElementById('modal-guru-title').innerHTML = '<i class="fa-solid fa-user-plus me-2"></i>Tambah Akun Guru';
     new bootstrap.Modal(document.getElementById('modalGuru')).show();
   }
@@ -154,7 +183,9 @@
     document.getElementById('fg-username').value = g.username;
     document.getElementById('fg-role').value = g.role;
     document.getElementById('fg-pass-note').innerText = '(Kosongkan jika tidak diubah)';
-    document.getElementById('modal-guru-title').innerHTML = '<i class="fa-solid fa-pen-to-square me-2"></i>Edit Akun Guru';
+    isiDropdownKelasBinaan(g.assigned_class_id);
+
+    document.getElementById('modal-guru-title').innerHTML = '<i class="fa-solid fa-pen-to-square me-2"></i>Edit Guru & Kelas Binaan';
     new bootstrap.Modal(document.getElementById('modalGuru')).show();
   }
 
@@ -169,6 +200,7 @@
       user_id: document.getElementById('fg-user-id').value,
       username: document.getElementById('fg-username').value.trim(),
       role: document.getElementById('fg-role').value,
+      assigned_class_id: document.getElementById('fg-kelas-binaan').value,
       password: document.getElementById('fg-password').value.trim()
     };
 
@@ -187,7 +219,7 @@
     } catch (err) {
       alert('Gagal memproses akun guru.');
     } finally {
-      btn.innerHTML = '<i class="fa-solid fa-floppy-disk me-1"></i> Simpan Akun Guru';
+      btn.innerHTML = '<i class="fa-solid fa-floppy-disk me-1"></i> Simpan Data & Penugasan Kelas';
       btn.disabled = false;
     }
   }
