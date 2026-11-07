@@ -1,0 +1,227 @@
+<section id="panel-guru">
+  <div class="card card-kpi">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+      <div>
+        <h6 class="fw-bold mb-0 text-primary"><i class="fa-solid fa-chalkboard-user me-2"></i>Manajemen Akun Guru & Wali Kelas</h6>
+        <small class="text-muted">Kelola akun pengajar, otorisasi peran, dan penugasan wali kelas</small>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="bukaModalTambahGuru()">
+        <i class="fa-solid fa-user-plus me-1"></i> Tambah Akun Guru
+      </button>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead class="table-dark">
+          <tr>
+            <th style="width: 45px;">No</th>
+            <th>Username</th>
+            <th>Peran (Role)</th>
+            <th>Kelas yang Dibina</th>
+            <th>Dibuat Pada</th>
+            <th class="text-center" style="width: 180px;">Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="table-guru-body">
+          <tr>
+            <td colspan="6" class="text-center text-muted py-4">
+              <div class="spinner-border spinner-border-sm text-primary me-2"></div>Memuat daftar pengajar...
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- Modal Tambah / Edit Guru -->
+<div class="modal fade" id="modalGuru" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-dark text-white">
+        <h6 class="modal-title fw-bold" id="modal-guru-title"><i class="fa-solid fa-user-plus me-2"></i>Tambah Akun Guru</h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-3">
+        <form id="form-guru" onsubmit="submitFormGuru(event)">
+          <input type="hidden" id="fg-user-id">
+
+          <div class="mb-2">
+            <label class="form-label small fw-semibold">Username Login</label>
+            <input type="text" id="fg-username" class="form-control form-control-sm" required placeholder="Contoh: bu_rini / pak_ahmad">
+          </div>
+
+          <div class="mb-2">
+            <label class="form-label small fw-semibold">Peran (Role)</label>
+            <select id="fg-role" class="form-select form-select-sm">
+              <option value="WALI_KELAS">Wali Kelas (Mengelola kelas binaan)</option>
+              <option value="KURIKULUM">Kurikulum (Koordinator seluruh kelas)</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Password <span id="fg-pass-note" class="text-muted fw-normal">(Default: guru123)</span></label>
+            <input type="text" id="fg-password" class="form-control form-control-sm" placeholder="Kosongkan jika tidak ingin mengubah">
+          </div>
+
+          <button type="submit" id="btn-save-guru" class="btn btn-primary btn-sm w-100">
+            <i class="fa-solid fa-floppy-disk me-1"></i> Simpan Akun Guru
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  var dataGuruList = [];
+
+  async function loadTabelGuru() {
+    var tbody = document.getElementById('table-guru-body');
+    var session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
+
+    try {
+      var res = await postGAS({ action: 'getDataGuru', user_id: session.user_id });
+      if (res.status === 'success') {
+        dataGuruList = res.data || [];
+        renderTabelGuru(dataGuruList);
+      } else {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-danger text-center py-4">' + res.message + '</td></tr>';
+      }
+    } catch (e) {
+      tbody.innerHTML = '<tr><td colspan="6" class="text-danger text-center py-4">Gagal memuat akun pengajar.</td></tr>';
+    }
+  }
+
+  function renderTabelGuru(list) {
+    var tbody = document.getElementById('table-guru-body');
+    tbody.innerHTML = '';
+    var session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
+
+    if (list.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">Belum ada akun guru terdaftar.</td></tr>';
+      return;
+    }
+
+    list.forEach(function(g, idx) {
+      var rBadge = g.role === 'KURIKULUM' ? 'bg-danger' : 'bg-primary';
+      var rLabel = g.role === 'KURIKULUM' ? 'Kurikulum' : 'Wali Kelas';
+      var isSelf = (g.user_id === session.user_id);
+
+      var htmlRow = '' +
+        '<tr>' +
+          '<td>' + (idx + 1) + '</td>' +
+          '<td class="fw-bold text-dark">' + g.username + (isSelf ? ' <span class="badge bg-secondary ms-1">Anda</span>' : '') + '</td>' +
+          '<td><span class="badge ' + rBadge + '">' + rLabel + '</span></td>' +
+          '<td><span class="text-secondary small">' + g.kelas_binaan + '</span></td>' +
+          '<td><small class="text-muted">' + (g.created_at || '').toString().slice(0, 10) + '</small></td>' +
+          '<td class="text-center">' +
+            '<button class="btn btn-sm btn-outline-warning py-0 px-2 me-1" onclick="resetPasswordGuru(\'' + g.user_id + '\', \'' + g.username + '\')" title="Reset Password ke guru123">' +
+              '<i class="fa-solid fa-key"></i>' +
+            '</button>' +
+            '<button class="btn btn-sm btn-outline-primary py-0 px-2 me-1" onclick="bukaModalEditGuru(\'' + g.user_id + '\')" title="Edit Akun">' +
+              '<i class="fa-solid fa-pen-to-square"></i>' +
+            '</button>';
+
+      if (!isSelf) {
+        htmlRow += '' +
+          '<button class="btn btn-sm btn-outline-danger py-0 px-2" onclick="hapusGuru(\'' + g.user_id + '\', \'' + g.username + '\')" title="Hapus Akun">' +
+            '<i class="fa-solid fa-trash"></i>' +
+          '</button>';
+      } else {
+        htmlRow += '<button class="btn btn-sm btn-light text-muted py-0 px-2 disabled"><i class="fa-solid fa-lock"></i></button>';
+      }
+
+      htmlRow += '</td></tr>';
+      tbody.innerHTML += htmlRow;
+    });
+  }
+
+  function bukaModalTambahGuru() {
+    document.getElementById('form-guru').reset();
+    document.getElementById('fg-user-id').value = '';
+    document.getElementById('fg-pass-note').innerText = '(Default: guru123)';
+    document.getElementById('modal-guru-title').innerHTML = '<i class="fa-solid fa-user-plus me-2"></i>Tambah Akun Guru';
+    new bootstrap.Modal(document.getElementById('modalGuru')).show();
+  }
+
+  function bukaModalEditGuru(userId) {
+    var g = dataGuruList.find(function(x) { return x.user_id === userId; });
+    if (!g) return;
+
+    document.getElementById('form-guru').reset();
+    document.getElementById('fg-user-id').value = g.user_id;
+    document.getElementById('fg-username').value = g.username;
+    document.getElementById('fg-role').value = g.role;
+    document.getElementById('fg-pass-note').innerText = '(Kosongkan jika tidak diubah)';
+    document.getElementById('modal-guru-title').innerHTML = '<i class="fa-solid fa-pen-to-square me-2"></i>Edit Akun Guru';
+    new bootstrap.Modal(document.getElementById('modalGuru')).show();
+  }
+
+  async function submitFormGuru(e) {
+    e.preventDefault();
+    var btn = document.getElementById('btn-save-guru');
+    btn.innerText = 'Menyimpan...';
+    btn.disabled = true;
+
+    var session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
+    var payloadData = {
+      user_id: document.getElementById('fg-user-id').value,
+      username: document.getElementById('fg-username').value.trim(),
+      role: document.getElementById('fg-role').value,
+      password: document.getElementById('fg-password').value.trim()
+    };
+
+    try {
+      var res = await postGAS({
+        action: 'saveGuru',
+        user_id: session.user_id,
+        payload: payloadData
+      });
+
+      alert(res.message);
+      if (res.status === 'success') {
+        bootstrap.Modal.getInstance(document.getElementById('modalGuru')).hide();
+        loadTabelGuru();
+      }
+    } catch (err) {
+      alert('Gagal memproses akun guru.');
+    } finally {
+      btn.innerHTML = '<i class="fa-solid fa-floppy-disk me-1"></i> Simpan Akun Guru';
+      btn.disabled = false;
+    }
+  }
+
+  async function resetPasswordGuru(userId, username) {
+    if (!confirm('Reset password akun "' + username + '" menjadi "guru123"?')) return;
+    var session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
+    try {
+      var res = await postGAS({
+        action: 'resetPasswordGuru',
+        user_id: session.user_id,
+        target_user_id: userId
+      });
+      alert(res.message);
+    } catch (e) {
+      alert('Gagal mereset password.');
+    }
+  }
+
+  async function hapusGuru(userId, username) {
+    if (!confirm('Hapus akun guru "' + username + '"? Akses login yang bersangkutan akan dicabut.')) return;
+    var session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
+    try {
+      var res = await postGAS({
+        action: 'deleteGuru',
+        user_id: session.user_id,
+        target_user_id: userId
+      });
+      alert(res.message);
+      loadTabelGuru();
+    } catch (e) {
+      alert('Gagal menghapus akun.');
+    }
+  }
+
+  loadTabelGuru();
+</script>
