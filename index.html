@@ -152,7 +152,7 @@
         <div class="d-flex align-items-center gap-2">
           <div id="wali-class-selector-box" style="display: none;" class="d-flex align-items-center gap-2">
             <label class="small fw-semibold text-muted mb-0"><i class="fa-solid fa-chalkboard me-1"></i>Kelas:</label>
-            <select id="select-active-class" class="form-select form-select-sm" style="width: 180px;" onchange="gantiKelasAktif(this.value)">
+            <select id="select-active-class" class="form-select form-select-sm" style="width: 220px;" onchange="gantiKelasAktif(this.value)">
               <option value="">Memuat Kelas...</option>
             </select>
             <!-- Tombol Buat Kelas HANYA untuk KURIKULUM -->
@@ -369,12 +369,21 @@
       const select = document.getElementById('select-active-class');
       if (!select) return;
 
+      const session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
+      const isKurikulum = (session.role === 'KURIKULUM' || session.role === 'ADMIN');
+
       try {
         const res = await postGAS({ action: 'getDaftarKelas', user_id: userId });
         if (res && res.status === 'success' && Array.isArray(res.data)) {
           cacheDaftarKelasGlobal = res.data;
           select.innerHTML = '';
-          if (res.data.length === 0) {
+
+          // Opsi Khusus Kurikulum: Dashboard Utama Seluruh Sekolah
+          if (isKurikulum) {
+            select.innerHTML += '<option value="ALL">🏛️ SEMUA KELAS (UTAMA)</option>';
+          }
+
+          if (res.data.length === 0 && !isKurikulum) {
             select.innerHTML = '<option value="">Belum Ada Kelas</option>';
             return;
           }
@@ -387,12 +396,12 @@
           });
 
           const savedClass = (sessionStorage.getItem('SIMKEL_ACTIVE_CLASS_ID') || '').toString().trim();
-          if (savedClass && res.data.some(k => (k.class_id || '').toString().trim() === savedClass)) {
+          if (savedClass && (savedClass === 'ALL' || res.data.some(k => (k.class_id || '').toString().trim() === savedClass))) {
             select.value = savedClass;
           } else {
-            const firstClassId = (res.data[0].class_id || '').toString().trim();
-            select.value = firstClassId;
-            sessionStorage.setItem('SIMKEL_ACTIVE_CLASS_ID', firstClassId);
+            const defVal = isKurikulum ? 'ALL' : (res.data[0] ? (res.data[0].class_id || '').toString().trim() : '');
+            select.value = defVal;
+            sessionStorage.setItem('SIMKEL_ACTIVE_CLASS_ID', defVal);
           }
 
           updateSubheaderInfo(select.value);
@@ -417,6 +426,12 @@
     function updateSubheaderInfo(classId) {
       const subTitle = document.getElementById('header-subtitle');
       if (!subTitle) return;
+
+      if (!classId || classId === 'ALL') {
+        subTitle.innerHTML = '<span class="fw-semibold text-danger"><i class="fa-solid fa-school me-1"></i>Lingkup: Seluruh Sekolah</span> &bull; Mode Pemantauan Global';
+        return;
+      }
+
       const k = cacheDaftarKelasGlobal.find(x => (x.class_id || '').toString().trim() === (classId || '').toString().trim());
       if (k) {
         subTitle.innerHTML = `<span class="fw-semibold text-primary"><i class="fa-solid fa-chalkboard me-1"></i>Kelas: ${k.nama_kelas}</span> &bull; Wali Kelas: <strong>${k.nama_wali || 'Belum Ditentukan'}</strong>`;
