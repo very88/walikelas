@@ -1,620 +1,193 @@
-<!-- ========================================================================= -->
-<!-- 1. TAMPILAN DASHBOARD WALI KELAS & PENGURUS KELAS                         -->
-<!-- ========================================================================= -->
-<div id="view-dashboard-wali" style="display: none;">
-  <!-- Kartu KPI Ringkasan Kelas (6 Metrik Utama) -->
-  <div class="row g-3 mb-4">
-    <div class="col-md-2 col-6">
-      <div class="card card-kpi">
-        <span class="text-muted small fw-semibold">Total Siswa</span>
-        <h3 id="wk-kpi-total" class="fw-bold my-1 text-primary">0</h3>
-        <small class="text-muted" id="wk-kpi-gender">L: 0 | P: 0</small>
-      </div>
-    </div>
-    <div class="col-md-2 col-6">
-      <div class="card card-kpi">
-        <span class="text-muted small fw-semibold">Hadir Hari Ini</span>
-        <h3 id="wk-kpi-hadir" class="fw-bold my-1 text-success">0</h3>
-        <small class="text-muted" id="wk-kpi-persen-hadir">0% Kehadiran</small>
-      </div>
-    </div>
-    <div class="col-md-2 col-6">
-      <div class="card card-kpi">
-        <span class="text-muted small fw-semibold">Saldo Kas</span>
-        <h3 id="wk-kpi-kas" class="fw-bold my-1 text-info">Rp 0</h3>
-        <small class="text-muted">Kas Aktif Kelas</small>
-      </div>
-    </div>
-    <div class="col-md-2 col-6">
-      <div class="card card-kpi">
-        <span class="text-muted small fw-semibold">Perhatian EWS</span>
-        <h3 id="wk-kpi-ews" class="fw-bold my-1 text-danger">0</h3>
-        <small class="text-danger"><i class="fa-solid fa-triangle-exclamation me-1"></i>Poin / Alfa</small>
-      </div>
-    </div>
-    <div class="col-md-2 col-6">
-      <div class="card card-kpi">
-        <span class="text-muted small fw-semibold">Izin Menunggu</span>
-        <h3 id="wk-kpi-izin-pending" class="fw-bold my-1 text-warning">0</h3>
-        <small class="text-muted">Perlu Konfirmasi</small>
-      </div>
-    </div>
-    <div class="col-md-2 col-6">
-      <div class="card card-kpi">
-        <span class="text-muted small fw-semibold">Total Aset</span>
-        <h3 id="wk-kpi-inv" class="fw-bold my-1 text-secondary">0</h3>
-        <small class="text-muted">Barang Inventaris</small>
-      </div>
-    </div>
-  </div>
-
-  <!-- Dua Kolom Analitik Grafik Chart.js -->
-  <div class="row g-3 mb-4">
-    <div class="col-lg-8">
-      <div class="card card-kpi p-3 h-100">
-        <div class="d-flex justify-content-between align-items-center mb-2">
-          <h6 class="fw-bold mb-0 text-dark"><i class="fa-solid fa-chart-column text-primary me-2"></i>Tren Tingkat Kehadiran Kelas (Mingguan)</h6>
-          <span class="badge bg-light text-muted border">Senin - Jumat</span>
-        </div>
-        <div style="position: relative; height: 260px; width: 100%;">
-          <canvas id="chartKehadiranMingguan"></canvas>
-        </div>
-      </div>
-    </div>
-    <div class="col-lg-4">
-      <div class="card card-kpi p-3 h-100">
-        <h6 class="fw-bold mb-2 text-dark"><i class="fa-solid fa-chart-pie text-info me-2"></i>Status Disiplin Siswa</h6>
-        <div style="position: relative; height: 210px; width: 100%;">
-          <canvas id="chartStatusDisiplin"></canvas>
-        </div>
-        <div class="text-center mt-2 small text-muted" id="chart-disiplin-legend">
-          Memuat status...
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Aksi Cepat & Agenda KBM Hari Ini -->
-  <div class="row g-3 mb-4">
-    <div class="col-lg-6">
-      <div class="card card-kpi p-3 h-100">
-        <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-bolt text-warning me-2"></i>Aksi Cepat Administrasi</h6>
-        <div class="row g-2">
-          <div class="col-6 col-md-4">
-            <button class="btn btn-outline-primary btn-sm w-100 py-2 text-start" onclick="navigateModule('presensi')">
-              <i class="fa-solid fa-calendar-check d-block fs-5 mb-1 text-primary"></i><strong>Presensi Harian</strong>
-            </button>
-          </div>
-          <div class="col-6 col-md-4">
-            <button class="btn btn-outline-success btn-sm w-100 py-2 text-start" onclick="navigateModule('jurnal')">
-              <i class="fa-solid fa-book-journal-whills d-block fs-5 mb-1 text-success"></i><strong>Isi Jurnal KBM</strong>
-            </button>
-          </div>
-          <div class="col-6 col-md-4">
-            <button class="btn btn-outline-danger btn-sm w-100 py-2 text-start" onclick="navigateModule('kedisiplinan')">
-              <i class="fa-solid fa-shield-halved d-block fs-5 mb-1 text-danger"></i><strong>Catat Poin Siswa</strong>
-            </button>
-          </div>
-          <div class="col-6 col-md-4">
-            <button class="btn btn-outline-info btn-sm w-100 py-2 text-start" onclick="navigateModule('piket')">
-              <i class="fa-solid fa-broom d-block fs-5 mb-1 text-info"></i><strong>Kelola Piket</strong>
-            </button>
-          </div>
-          <div class="col-6 col-md-4">
-            <button class="btn btn-outline-secondary btn-sm w-100 py-2 text-start" onclick="navigateModule('pengumuman')">
-              <i class="fa-solid fa-bullhorn d-block fs-5 mb-1 text-secondary"></i><strong>Buat Pengumuman</strong>
-            </button>
-          </div>
-          <div class="col-6 col-md-4">
-            <button class="btn btn-outline-dark btn-sm w-100 py-2 text-start" onclick="navigateModule('kas')">
-              <i class="fa-solid fa-wallet d-block fs-5 mb-1 text-dark"></i><strong>Catat Kas Kelas</strong>
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="col-lg-6">
-      <div class="card card-kpi p-3 h-100">
-        <div class="d-flex justify-content-between align-items-center mb-2">
-          <h6 class="fw-bold text-dark mb-0"><i class="fa-solid fa-calendar-day text-primary me-2"></i>Agenda KBM Hari Ini (<span id="wk-label-hari">-</span>)</h6>
-          <span class="badge bg-primary-subtle text-primary" id="wk-badge-tanggal">-</span>
-        </div>
-        <div id="wk-box-agenda" class="mb-3">
-          <small class="text-muted">Memuat agenda KBM...</small>
-        </div>
-        <hr class="my-2">
+<section id="panel-dashboard">
+  <!-- Container Header Dinamis Dashboard -->
+  <div id="dashboard-header-container" class="mb-4">
+    <div class="card p-3 border-0 bg-white rounded-3 shadow-sm">
+      <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
         <div>
-          <span class="small fw-bold text-muted d-block mb-1"><i class="fa-solid fa-broom me-1 text-warning"></i>Petugas Piket Kebersihan Hari Ini:</span>
-          <div id="wk-box-piket-today" class="small text-secondary">
-            Memuat petugas...
-          </div>
+          <h5 class="fw-bold mb-1 text-dark" id="dash-title">Ringkasan Dashboard</h5>
+          <small class="text-muted" id="dash-desc">Memuat data analisis...</small>
         </div>
+        <div id="dash-badge-slot"></div>
       </div>
     </div>
   </div>
 
-  <!-- Tabel Early Warning System & Pengajuan Menunggu -->
-  <div class="row g-3">
-    <div class="col-lg-6">
-      <div class="card card-kpi p-3 h-100">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h6 class="fw-bold text-danger mb-0"><i class="fa-solid fa-triangle-exclamation me-2"></i>Siswa Butuh Pembinaan (EWS)</h6>
-          <button class="btn btn-outline-danger btn-sm py-0 px-2" onclick="navigateModule('kedisiplinan')">Lihat Semua</button>
-        </div>
-        <div class="table-responsive">
-          <table class="table table-sm table-hover align-middle mb-0">
-            <thead class="table-light small">
-              <tr>
-                <th>Nama Siswa</th>
-                <th class="text-center">Alfa</th>
-                <th class="text-center">Poin</th>
-                <th>Status Pembinaan</th>
-              </tr>
-            </thead>
-            <tbody id="wk-table-ews-body" class="small">
-              <tr><td colspan="4" class="text-center text-muted py-3">Memeriksa data EWS...</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <div class="col-lg-6">
-      <div class="card card-kpi p-3 h-100">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h6 class="fw-bold text-dark mb-0"><i class="fa-solid fa-envelope-open-text me-2 text-warning"></i>Pengajuan Izin / Dispen Menunggu</h6>
-          <button class="btn btn-outline-primary btn-sm py-0 px-2" onclick="navigateModule('pengajuan')">Kelola Izin</button>
-        </div>
-        <div class="table-responsive">
-          <table class="table table-sm table-hover align-middle mb-0">
-            <thead class="table-light small">
-              <tr>
-                <th>Siswa</th>
-                <th>Jenis</th>
-                <th>Alasan</th>
-                <th class="text-center">Aksi</th>
-              </tr>
-            </thead>
-            <tbody id="wk-table-izin-body" class="small">
-              <tr><td colspan="4" class="text-center text-muted py-3">Memeriksa pengajuan...</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ========================================================================= -->
-<!-- 2. TAMPILAN DASHBOARD SISWA BIASA                                         -->
-<!-- ========================================================================= -->
-<div id="view-dashboard-siswa" style="display: none;">
-  <!-- Kartu Metrik Pribadi Siswa -->
-  <div class="row g-3 mb-4">
-    <div class="col-md-3 col-6">
-      <div class="card card-kpi text-center p-3">
-        <small class="text-muted d-block fw-semibold">Kehadiran Saya</small>
-        <h3 id="s-kpi-hadir" class="fw-bold text-success my-1">0 Hari</h3>
-        <small class="text-muted" id="s-kpi-hadir-detail">H: 0 | S: 0 | I: 0 | A: 0</small>
-      </div>
-    </div>
-    <div class="col-md-3 col-6">
-      <div class="card card-kpi text-center p-3">
-        <small class="text-muted d-block fw-semibold">Poin Kedisiplinan</small>
-        <h3 id="s-kpi-poin" class="fw-bold text-primary my-1">0 Poin</h3>
-        <span id="s-kpi-status-ews" class="badge bg-success-subtle text-success small">Aman / Kondusif</span>
-      </div>
-    </div>
-    <div class="col-md-3 col-6">
-      <div class="card card-kpi text-center p-3">
-        <small class="text-muted d-block fw-semibold">Saldo Kas Kelas</small>
-        <h3 id="s-kpi-kas" class="fw-bold text-info my-1">Rp 0</h3>
-        <small class="text-muted"><i class="fa-solid fa-eye me-1"></i>Transparansi Kas</small>
-      </div>
-    </div>
-    <div class="col-md-3 col-6">
-      <div class="card card-kpi text-center p-3">
-        <small class="text-muted d-block fw-semibold">Jadwal Piket Saya</small>
-        <h3 id="s-kpi-hari-piket" class="fw-bold text-warning my-1">-</h3>
-        <small class="text-muted" id="s-kpi-status-piket-hari-ini">Memeriksa jadwal...</small>
-      </div>
+  <!-- Container Kartu KPI Adaptif -->
+  <div class="row g-3" id="dashboard-kpi-container">
+    <div class="col-12 text-center py-5 text-muted">
+      <div class="spinner-border spinner-border-sm text-primary me-2"></div>Menyesuaikan statistik dengan peran Anda...
     </div>
   </div>
 
-  <!-- Banner Pengingat Piket Hari Ini -->
-  <div id="alert-piket-hari-ini" class="alert alert-warning d-none mb-3 py-2 px-3 small" role="alert">
-    <i class="fa-solid fa-broom me-2 fs-6"></i>
-    <strong>Perhatian:</strong> Hari ini adalah giliran piket kebersihan kelas Anda! Pastikan kelas dan papan tulis bersih rapi.
-  </div>
-
-  <!-- Papan Pengumuman & Aksi Siswa -->
-  <div class="row g-3">
-    <div class="col-lg-8">
-      <div class="card card-kpi p-3 h-100">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h6 class="fw-bold text-dark mb-0"><i class="fa-solid fa-bullhorn me-2 text-primary"></i>Pengumuman & Informasi Kelas</h6>
-          <span class="badge bg-light text-muted border">Terbaru</span>
-        </div>
-        <div id="siswa-box-pengumuman">
-          <div class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm text-primary me-2"></div>Memeriksa pengumuman...</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="col-lg-4">
-      <div class="card card-kpi p-3 mb-3">
-        <h6 class="fw-bold text-dark mb-2"><i class="fa-solid fa-people-carry-box me-2 text-primary"></i>Petugas Piket Hari Ini (<span id="label-hari-ini">-</span>)</h6>
-        <div id="box-petugas-piket-today">
-          <small class="text-muted">Memuat petugas piket...</small>
-        </div>
-      </div>
-
-      <div class="card card-kpi p-3">
-        <h6 class="fw-bold text-dark mb-2"><i class="fa-solid fa-bolt me-2 text-warning"></i>Aksi Cepat Siswa</h6>
-        <div class="d-grid gap-2">
-          <button class="btn btn-outline-primary btn-sm text-start py-2" onclick="navigateModule('pengajuan')">
-            <i class="fa-solid fa-envelope-open-text me-2"></i> Ajukan Izin / Dispensasi Lomba
-          </button>
-          <button class="btn btn-outline-secondary btn-sm text-start py-2" onclick="navigateModule('piket')">
-            <i class="fa-solid fa-broom me-2"></i> Lihat Jadwal Piket Lengkap
-          </button>
-          <button class="btn btn-outline-info btn-sm text-start py-2" onclick="navigateModule('pesan')">
-            <i class="fa-solid fa-comments me-2"></i> Kirim Pesan ke Wali Kelas
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+  <!-- Container Detail Tambahan -->
+  <div class="row g-3 mt-1" id="dashboard-extra-container"></div>
+</section>
 
 <script>
-  (async function initDashboardCore() {
-    const session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
-    const role = session.role || 'SISWA';
-    const isSiswaBiasa = (role === 'SISWA');
-
-    if (isSiswaBiasa) {
-      document.getElementById('view-dashboard-siswa').style.display = 'block';
-      document.getElementById('view-dashboard-wali').style.display = 'none';
-      await renderDashboardSiswa(session);
-    } else {
-      document.getElementById('view-dashboard-wali').style.display = 'block';
-      document.getElementById('view-dashboard-siswa').style.display = 'none';
-      await renderDashboardWali();
-    }
-  })();
-
-  // =========================================================================
-  // LOGIKA DASHBOARD WALI KELAS & PENGURUS
-  // =========================================================================
-  async function renderDashboardWali() {
-    const hariArr = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-    const now = new Date();
-    const namaHari = hariArr[now.getDay()];
-    const tglFormatted = now.toISOString().slice(0, 10);
-
-    document.getElementById('wk-label-hari').innerText = namaHari;
-    document.getElementById('wk-badge-tanggal').innerText = tglFormatted;
+  async function initDashboardAdaptive() {
+    var session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
+    var activeClassId = sessionStorage.getItem('SIMKEL_ACTIVE_CLASS_ID') || '';
+    var kpiBox = document.getElementById('dashboard-kpi-container');
+    var extraBox = document.getElementById('dashboard-extra-container');
+    var titleEl = document.getElementById('dash-title');
+    var descEl = document.getElementById('dash-desc');
+    var badgeSlot = document.getElementById('dash-badge-slot');
 
     try {
-      // 1. Ambil Metrik Global
-      const resDash = await postGAS({ action: 'getDashboardData' });
-      if (resDash.status === 'success') {
-        const stats = resDash.stats;
-        document.getElementById('wk-kpi-total').innerText = stats.total_siswa;
-        document.getElementById('wk-kpi-hadir').innerText = stats.hadir_hari_ini;
-        document.getElementById('wk-kpi-kas').innerText = 'Rp ' + Number(stats.saldo_kas || 0).toLocaleString('id-ID');
-        document.getElementById('wk-kpi-ews').innerText = stats.perlu_perhatian;
+      var res = await postGAS({
+        action: 'getDashboardData',
+        user_id: session.user_id,
+        class_id: activeClassId
+      });
 
-        const persen = stats.total_siswa > 0 ? Math.round((stats.hadir_hari_ini / stats.total_siswa) * 100) : 0;
-        document.getElementById('wk-kpi-persen-hadir').innerText = `${persen}% Kehadiran`;
+      if (res.status !== 'success') {
+        kpiBox.innerHTML = '<div class="col-12"><div class="alert alert-danger py-2 small">' + res.message + '</div></div>';
+        return;
       }
 
-      // 2. Ambil Data Siswa (untuk gender & EWS)
-      const resSiswa = await postGAS({ action: 'getDataSiswa' });
-      let mapSiswa = {};
-      let countL = 0, countP = 0;
-      if (resSiswa.status === 'success' && resSiswa.data) {
-        resSiswa.data.forEach(s => {
-          mapSiswa[s.student_id] = s;
-          if (s.jenis_kelamin === 'P') countP++; else countL++;
-        });
-        document.getElementById('wk-kpi-gender').innerText = `L: ${countL} | P: ${countP}`;
+      var roleView = res.role_view;
+      var d = res.data;
+
+      // ================= 1. VIEW SISWA =================
+      if (roleView === 'SISWA') {
+        titleEl.innerText = 'Selamat Datang, ' + d.nama;
+        descEl.innerText = 'NIS: ' + d.nis + ' | Rekap kehadiran dan catatan kedisiplinan pribadi Anda.';
+        badgeSlot.innerHTML = '<span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2">Akun Siswa</span>';
+
+        var rate = d.kehadiran.total > 0 ? Math.round((d.kehadiran.hadir / d.kehadiran.total) * 100) : 100;
+
+        kpiBox.innerHTML = '' +
+          '<div class="col-md-3 col-6">' +
+            '<div class="card card-kpi border-start border-success border-4">' +
+              '<small class="text-muted fw-semibold">Kehadiran Saya</small>' +
+              '<h3 class="fw-bold my-1 text-success">' + rate + '%</h3>' +
+              '<small class="text-muted">' + d.kehadiran.hadir + ' dari ' + d.kehadiran.total + ' pertemuan</small>' +
+            '</div>' +
+          '</div>' +
+          '<div class="col-md-3 col-6">' +
+            '<div class="card card-kpi border-start border-warning border-4">' +
+              '<small class="text-muted fw-semibold">Izin & Sakit</small>' +
+              '<h3 class="fw-bold my-1 text-warning">' + (d.kehadiran.sakit + d.kehadiran.izin) + '</h3>' +
+              '<small class="text-muted">S:' + d.kehadiran.sakit + ' | I:' + d.kehadiran.izin + '</small>' +
+            '</div>' +
+          '</div>' +
+          '<div class="col-md-3 col-6">' +
+            '<div class="card card-kpi border-start border-danger border-4">' +
+              '<small class="text-muted fw-semibold">Poin Pelanggaran</small>' +
+              '<h3 class="fw-bold my-1 text-danger">' + d.poin_disiplin + '</h3>' +
+              '<small class="text-muted">Early Warning: ' + (d.poin_disiplin >= 25 ? 'Perhatian' : 'Aman') + '</small>' +
+            '</div>' +
+          '</div>' +
+          '<div class="col-md-3 col-6">' +
+            '<div class="card card-kpi border-start border-primary border-4">' +
+              '<small class="text-muted fw-semibold">Jadwal Piket</small>' +
+              '<h5 class="fw-bold my-2 text-primary">' + d.jadwal_piket + '</h5>' +
+              '<small class="badge ' + (d.piket_hari_ini ? 'bg-danger' : 'bg-light text-secondary border') + '">' + (d.piket_hari_ini ? 'Hari ini jadwal Anda!' : 'Bukan hari ini') + '</small>' +
+            '</div>' +
+          '</div>';
+
+        extraBox.innerHTML = '';
+        return;
       }
 
-      // 3. Evaluasi EWS Tabel & Donut Chart
-      const resPelanggaran = await postGAS({ action: 'getDataPelanggaran' });
-      const poinMap = {};
-      if (resPelanggaran.status === 'success' && resPelanggaran.data) {
-        resPelanggaran.data.forEach(p => {
-          poinMap[p.student_id] = (poinMap[p.student_id] || 0) + (Number(p.poin) || 0);
-        });
+      // ================= 2. VIEW KURIKULUM (GLOBAL SEKOLAH) =================
+      if (roleView === 'KURIKULUM_GLOBAL') {
+        titleEl.innerText = 'Dashboard Pusat Kurikulum';
+        descEl.innerText = 'Monitoring makro seluruh kelas dan administrasi kependudukan sekolah.';
+        badgeSlot.innerHTML = '<span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2">Koordinator Kurikulum</span>';
+
+        kpiBox.innerHTML = '' +
+          '<div class="col-md-3 col-6">' +
+            '<div class="card card-kpi border-start border-primary border-4">' +
+              '<small class="text-muted fw-semibold">Total Ruang Kelas</small>' +
+              '<h3 class="fw-bold my-1 text-dark">' + d.total_kelas + '</h3>' +
+              '<small class="text-muted">Aktif semester ini</small>' +
+            '</div>' +
+          '</div>' +
+          '<div class="col-md-3 col-6">' +
+            '<div class="card card-kpi border-start border-info border-4">' +
+              '<small class="text-muted fw-semibold">Total Siswa Terdaftar</small>' +
+              '<h3 class="fw-bold my-1 text-dark">' + d.total_siswa + '</h3>' +
+              '<small class="text-muted">Siswa di semua kelas</small>' +
+            '</div>' +
+          '</div>' +
+          '<div class="col-md-3 col-6">' +
+            '<div class="card card-kpi border-start border-success border-4">' +
+              '<small class="text-muted fw-semibold">Presensi Hadir Hari Ini</small>' +
+              '<h3 class="fw-bold my-1 text-success">' + d.hadir_hari_ini + '</h3>' +
+              '<small class="text-muted">Tercatat masuk sekolah</small>' +
+            '</div>' +
+          '</div>' +
+          '<div class="col-md-3 col-6">' +
+            '<div class="card card-kpi border-start border-warning border-4">' +
+              '<small class="text-muted fw-semibold">Akumulasi Kas Seluruh Kelas</small>' +
+              '<h3 class="fw-bold my-1 text-warning">Rp ' + Number(d.total_kas_seluruh_kelas).toLocaleString('id-ID') + '</h3>' +
+              '<small class="text-muted">Total kas aktif</small>' +
+            '</div>' +
+          '</div>';
+
+        extraBox.innerHTML = '' +
+          '<div class="col-12">' +
+            '<div class="card card-kpi">' +
+              '<h6 class="fw-bold text-primary mb-2"><i class="fa-solid fa-list-check me-2"></i>Petunjuk Pemantauan Kurikulum</h6>' +
+              '<p class="small text-muted mb-0">Untuk memantau aktivitas, nilai, absensi, atau jurnal dari kelas tertentu secara mendalam, silakan <strong>pilih kelas melalui menu dropdown di kanan atas</strong>.</p>' +
+            '</div>' +
+          '</div>';
+        return;
       }
 
-      const tbodyEws = document.getElementById('wk-table-ews-body');
-      tbodyEws.innerHTML = '';
-      let listEws = [];
-      let jmlKritis = 0, jmlPeringatan = 0, jmlAman = 0;
+      // ================= 3. VIEW WALI KELAS / KURIKULUM PER KELAS =================
+      titleEl.innerText = 'Dashboard Kelas: ' + d.nama_kelas;
+      descEl.innerText = 'Statistik operasional harian, presensi, dan kedisiplinan siswa.';
+      badgeSlot.innerHTML = '<span class="badge bg-primary px-3 py-2">' + (roleView === 'KURIKULUM_KELAS' ? 'Monitoring Kurikulum' : 'Wali Kelas') + '</span>';
 
-      if (resSiswa.status === 'success' && resSiswa.data) {
-        resSiswa.data.forEach(s => {
-          const sid = s.student_id;
-          const poin = poinMap[sid] || 0;
-          if (poin >= 50) {
-            jmlKritis++;
-            listEws.push({ nama: s.nama_lengkap, alfa: 0, poin: poin, status: 'Kritis (Panggil Ortu)', level: 'danger' });
-          } else if (poin >= 25) {
-            jmlPeringatan++;
-            listEws.push({ nama: s.nama_lengkap, alfa: 0, poin: poin, status: 'Bimbingan Intensif', level: 'warning' });
-          } else {
-            jmlAman++;
-          }
-        });
-      }
+      kpiBox.innerHTML = '' +
+        '<div class="col-md-3 col-6">' +
+          '<div class="card card-kpi border-start border-primary border-4">' +
+            '<small class="text-muted fw-semibold">Jumlah Siswa Kelas</small>' +
+            '<h3 class="fw-bold my-1 text-dark">' + d.total_siswa + '</h3>' +
+            '<small class="text-muted">Siswa aktif</small>' +
+          '</div>' +
+        '</div>' +
+        '<div class="col-md-3 col-6">' +
+          '<div class="card card-kpi border-start border-success border-4">' +
+            '<small class="text-muted fw-semibold">Hadir Hari Ini</small>' +
+            '<h3 class="fw-bold my-1 text-success">' + d.hadir_hari_ini + '</h3>' +
+            '<small class="text-muted">Dari ' + d.total_siswa + ' siswa</small>' +
+          '</div>' +
+        '</div>' +
+        '<div class="col-md-3 col-6">' +
+          '<div class="card card-kpi border-start border-danger border-4">' +
+            '<small class="text-muted fw-semibold">Perlu Perhatian (EWS)</small>' +
+            '<h3 class="fw-bold my-1 text-danger">' + d.perlu_perhatian + '</h3>' +
+            '<small class="text-muted">Poin >= 25 atau Alfa >= 3</small>' +
+          '</div>' +
+        '</div>' +
+        '<div class="col-md-3 col-6">' +
+          '<div class="card card-kpi border-start border-warning border-4">' +
+            '<small class="text-muted fw-semibold">Saldo Kas Kelas</small>' +
+            '<h3 class="fw-bold my-1 text-warning">Rp ' + Number(d.saldo_kas).toLocaleString('id-ID') + '</h3>' +
+            '<small class="text-muted">Kas kelas aktif</small>' +
+          '</div>' +
+        '</div>';
 
-      if (listEws.length === 0) {
-        tbodyEws.innerHTML = '<tr><td colspan="4" class="text-center text-success py-3"><i class="fa-solid fa-circle-check me-1"></i>Seluruh siswa berstatus disiplin aman.</td></tr>';
-      } else {
-        listEws.slice(0, 5).forEach(e => {
-          tbodyEws.innerHTML += `
-            <tr>
-              <td class="fw-semibold">${e.nama}</td>
-              <td class="text-center text-muted">-</td>
-              <td class="text-center text-danger fw-bold">${e.poin}</td>
-              <td><span class="badge bg-${e.level}">${e.status}</span></td>
-            </tr>
-          `;
-        });
-      }
-
-      // Render Donut Chart Status Disiplin
-      renderChartDisiplin(jmlAman, jmlPeringatan, jmlKritis);
-
-      // 4. Ambil Pengajuan Izin Menunggu
-      const resReq = await postGAS({ action: 'getDataPengajuan' });
-      const tbodyIzin = document.getElementById('wk-table-izin-body');
-      tbodyIzin.innerHTML = '';
-      let pendingCount = 0;
-
-      if (resReq.status === 'success' && resReq.data) {
-        const listPending = resReq.data.filter(r => r.status === 'MENUNGGU');
-        pendingCount = listPending.length;
-        document.getElementById('wk-kpi-izin-pending').innerText = pendingCount;
-
-        if (listPending.length === 0) {
-          tbodyIzin.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-3">Tidak ada pengajuan izin menunggu.</td></tr>';
-        } else {
-          listPending.slice(0, 4).forEach(p => {
-            const namaS = (mapSiswa[p.student_id] || {}).nama_lengkap || p.student_id;
-            tbodyIzin.innerHTML += `
-              <tr>
-                <td class="fw-semibold">${namaS}</td>
-                <td><span class="badge ${p.jenis_pengajuan === 'DISPENSASI' ? 'bg-primary' : 'bg-info text-dark'}">${p.jenis_pengajuan}</span></td>
-                <td><small class="text-truncate d-inline-block" style="max-width: 140px;">${p.alasan}</small></td>
-                <td class="text-center">
-                  <button class="btn btn-sm btn-success py-0 px-2 me-1" onclick="konfirmasiIzinDirect('${p.pengajuan_id}', 'DISETUJUI')"><i class="fa-solid fa-check"></i></button>
-                  <button class="btn btn-sm btn-danger py-0 px-2" onclick="konfirmasiIzinDirect('${p.pengajuan_id}', 'DITOLAK')"><i class="fa-solid fa-xmark"></i></button>
-                </td>
-              </tr>
-            `;
-          });
-        }
-      }
-
-      // 5. Total Inventaris
-      const resInv = await postGAS({ action: 'getDataInventaris' });
-      if (resInv.status === 'success' && resInv.data) {
-        let sumBarang = 0;
-        resInv.data.forEach(i => sumBarang += (Number(i.jumlah) || 1));
-        document.getElementById('wk-kpi-inv').innerText = sumBarang;
-      }
-
-      // 6. Agenda KBM Hari Ini
-      const resJurnal = await postGAS({ action: 'getDataJurnal' });
-      const boxAgenda = document.getElementById('wk-box-agenda');
-      if (resJurnal.status === 'success' && resJurnal.data) {
-        const jurnalToday = resJurnal.data.filter(j => (j.tanggal || '').toString().slice(0, 10) === tglFormatted);
-        if (jurnalToday.length === 0) {
-          boxAgenda.innerHTML = `<small class="text-muted"><i class="fa-regular fa-calendar-xmark me-1"></i>Belum ada agenda KBM yang dicatat hari ini.</small>`;
-        } else {
-          boxAgenda.innerHTML = '<div class="list-group list-group-flush">';
-          jurnalToday.forEach(jt => {
-            boxAgenda.innerHTML += `
-              <div class="list-group-item px-0 py-1">
-                <span class="badge bg-primary-subtle text-primary me-2">Jam ${jt.jam_ke || '-'}</span>
-                <strong>${jt.nama_kegiatan}</strong> - <small class="text-secondary">${jt.penanggung_jawab || ''}</small>
-              </div>
-            `;
-          });
-          boxAgenda.innerHTML += '</div>';
-        }
-      }
-
-      // 7. Petugas Piket Hari Ini
-      const resPiket = await postGAS({ action: 'getJadwalPiket' });
-      const boxPiket = document.getElementById('wk-box-piket-today');
-      if (resPiket.status === 'success' && resPiket.data) {
-        const piketToday = resPiket.data.filter(p => (p.hari || '').toLowerCase() === namaHari.toLowerCase());
-        if (piketToday.length > 0) {
-          const names = piketToday.map(pt => (mapSiswa[pt.student_id] || {}).nama_lengkap || pt.student_id);
-          boxPiket.innerHTML = names.map(n => `<span class="badge bg-light text-dark border me-1 mb-1"><i class="fa-solid fa-check text-success me-1"></i>${n}</span>`).join('');
-        } else {
-          boxPiket.innerHTML = '<small class="text-muted">Tidak ada jadwal piket hari ini.</small>';
-        }
-      }
-
-      // 8. Render Bar Chart Mingguan
-      renderChartMingguan();
+      extraBox.innerHTML = '' +
+        '<div class="col-12">' +
+          '<div class="card card-kpi bg-light border-0">' +
+            '<div class="d-flex align-items-center justify-content-between">' +
+              '<div>' +
+                '<h6 class="fw-bold mb-1 text-dark"><i class="fa-solid fa-broom me-2 text-primary"></i>Petugas Piket Kebersihan Hari Ini</h6>' +
+                '<small class="text-muted">Terdapat <strong>' + d.petugas_piket_hari_ini + '</strong> siswa terjadwal bertugas piket hari ini.</small>' +
+              '</div>' +
+              '<button class="btn btn-outline-primary btn-sm" onclick="navigateModule(\'piket\')">Buka Jadwal Piket</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
 
     } catch (err) {
-      console.warn('Gagal merender dashboard wali:', err);
+      kpiBox.innerHTML = '<div class="col-12"><div class="alert alert-danger py-2 small">Gagal memuat statistik dashboard.</div></div>';
     }
   }
 
-  function renderChartMingguan() {
-    const canvas = document.getElementById('chartKehadiranMingguan');
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (window.wkChartMingguan) window.wkChartMingguan.destroy();
-    window.wkChartMingguan = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat'],
-        datasets: [{
-          label: 'Tingkat Kehadiran (%)',
-          data: [96, 94, 98, 92, 95],
-          backgroundColor: '#2563EB',
-          borderRadius: 6
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: { y: { min: 0, max: 100 } }
-      }
-    });
-  }
-
-  function renderChartDisiplin(aman, peringatan, kritis) {
-    const canvas = document.getElementById('chartStatusDisiplin');
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (window.wkChartDisiplin) window.wkChartDisiplin.destroy();
-    window.wkChartDisiplin = new Chart(ctx, {
-      type: 'doughnut',
-      data: {
-        labels: ['Aman', 'Peringatan', 'Kritis'],
-        datasets: [{
-          data: [aman, peringatan, kritis],
-          backgroundColor: ['#10B981', '#F59E0B', '#EF4444'],
-          borderWidth: 2
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } }
-      }
-    });
-    document.getElementById('chart-disiplin-legend').innerHTML = `
-      <span class="text-success me-2">● Aman: ${aman}</span>
-      <span class="text-warning me-2">● Peringatan: ${peringatan}</span>
-      <span class="text-danger">● Kritis: ${kritis}</span>
-    `;
-  }
-
-  async function konfirmasiIzinDirect(id, status) {
-    const session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
-    try {
-      const res = await postGAS({
-        action: 'updateStatusPengajuan',
-        pengajuan_id: id,
-        status: status,
-        user_id: session.user_id
-      });
-      alert(res.message);
-      renderDashboardWali();
-    } catch (e) {
-      alert('Gagal memproses pengajuan.');
-    }
-  }
-
-  // =========================================================================
-  // LOGIKA DASHBOARD SISWA BIASA
-  // =========================================================================
-  async function renderDashboardSiswa(session) {
-    try {
-      // 1. Kas Transparansi
-      const resDash = await postGAS({ action: 'getDashboardData' });
-      if (resDash.status === 'success') {
-        document.getElementById('s-kpi-kas').innerText = 'Rp ' + Number(resDash.stats.saldo_kas || 0).toLocaleString('id-ID');
-      }
-
-      // 2. Profil 360 Mandiri Siswa
-      if (session.student_id) {
-        const res360 = await postGAS({ action: 'getStudent360', student_id: session.student_id });
-        if (res360.status === 'success') {
-          const d = res360.data;
-          document.getElementById('s-kpi-hadir').innerText = (d.presensi.H || 0) + ' Hari';
-          document.getElementById('s-kpi-hadir-detail').innerText = `H: ${d.presensi.H} | S: ${d.presensi.S} | I: ${d.presensi.I} | A: ${d.presensi.A}`;
-          document.getElementById('s-kpi-poin').innerText = (d.total_poin || 0) + ' Poin';
-          const badgeEws = document.getElementById('s-kpi-status-ews');
-          badgeEws.innerText = d.ews.status;
-          badgeEws.className = `badge bg-${d.ews.level}-subtle text-${d.ews.level} small`;
-        }
-      }
-
-      // 3. Nama Hari
-      const hariArr = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-      const hariIni = hariArr[new Date().getDay()];
-      document.getElementById('label-hari-ini').innerText = hariIni;
-
-      // 4. Jadwal Piket Siswa
-      const resPiket = await postGAS({ action: 'getJadwalPiket' });
-      const resSiswa = await postGAS({ action: 'getDataSiswa' });
-      const sMap = {};
-      if (resSiswa.status === 'success' && resSiswa.data) {
-        resSiswa.data.forEach(s => sMap[s.student_id] = s.nama_lengkap);
-      }
-
-      if (resPiket.status === 'success' && resPiket.data) {
-        const myPiket = resPiket.data.filter(p => p.student_id === session.student_id);
-        if (myPiket.length > 0) {
-          const hariList = myPiket.map(x => x.hari).join(', ');
-          document.getElementById('s-kpi-hari-piket').innerText = hariList;
-
-          const isPiketToday = myPiket.some(x => (x.hari || '').toLowerCase() === hariIni.toLowerCase());
-          if (isPiketToday) {
-            document.getElementById('s-kpi-status-piket-hari-ini').innerText = 'Petugas Hari Ini!';
-            document.getElementById('s-kpi-status-piket-hari-ini').className = 'text-danger fw-bold';
-            document.getElementById('alert-piket-hari-ini').classList.remove('d-none');
-          } else {
-            document.getElementById('s-kpi-status-piket-hari-ini').innerText = 'Bukan giliran hari ini';
-          }
-        } else {
-          document.getElementById('s-kpi-hari-piket').innerText = 'Nihil';
-          document.getElementById('s-kpi-status-piket-hari-ini').innerText = 'Belum dijadwalkan';
-        }
-
-        const piketToday = resPiket.data.filter(p => (p.hari || '').toLowerCase() === hariIni.toLowerCase());
-        const boxPetugas = document.getElementById('box-petugas-piket-today');
-        if (piketToday.length > 0) {
-          boxPetugas.innerHTML = '<ul class="list-unstyled mb-0 small">';
-          piketToday.forEach(pt => {
-            const nama = sMap[pt.student_id] || pt.student_id;
-            boxPetugas.innerHTML += `<li class="py-1 border-bottom"><i class="fa-solid fa-check text-success me-2"></i>${nama}</li>`;
-          });
-          boxPetugas.innerHTML += '</ul>';
-        } else {
-          boxPetugas.innerHTML = `<small class="text-muted">Tidak ada jadwal piket hari ${hariIni}.</small>`;
-        }
-      }
-
-      // 5. Papan Pengumuman
-      const resAnn = await postGAS({ action: 'getDataPengumuman' });
-      const annBox = document.getElementById('siswa-box-pengumuman');
-      if (resAnn.status === 'success' && resAnn.data && resAnn.data.length > 0) {
-        annBox.innerHTML = '';
-        resAnn.data.slice(0, 3).forEach(ann => {
-          annBox.innerHTML += `
-            <div class="p-3 border rounded mb-2 bg-light">
-              <div class="d-flex justify-content-between align-items-center mb-1">
-                <span class="fw-bold text-primary small">${ann.judul}</span>
-                <small class="text-muted" style="font-size: 0.75rem;">${ann.tanggal_posting || ''}</small>
-              </div>
-              <p class="small text-secondary mb-1" style="white-space: pre-line;">${ann.isi}</p>
-              <small class="text-muted" style="font-size: 0.75rem;"><i class="fa-solid fa-user-pen me-1"></i>Oleh: ${ann.author || 'Wali Kelas'}</small>
-            </div>
-          `;
-        });
-      } else {
-        annBox.innerHTML = '<div class="text-center py-4 text-muted small"><i class="fa-regular fa-bell-slash me-1"></i>Belum ada pengumuman kelas.</div>';
-      }
-
-    } catch (e) {
-      console.warn('Gagal memuat dashboard siswa:', e);
-    }
-  }
+  initDashboardAdaptive();
 </script>
