@@ -76,7 +76,28 @@
     .btn-check:checked + .btn-outline-info { background-color: #0284C7; color: #fff; }
     .btn-check:checked + .btn-outline-danger { background-color: #DC2626; color: #fff; }
 
-    /* Tampilan HP Android */
+    /* Input Password Minimalis dengan Toggle Mata */
+    .password-wrapper {
+      position: relative;
+    }
+    .password-toggle-btn {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 0;
+      font-size: 0.9rem;
+      z-index: 5;
+    }
+    .password-toggle-btn:hover {
+      color: var(--primary-navy);
+    }
+
+    /* Tampilan HP / Layar Kecil */
     @media (max-width: 768px) {
       .simkel-sidebar { display: none; }
       .simkel-main { margin-left: 0; padding: 1rem; margin-bottom: 80px; }
@@ -108,7 +129,7 @@
 </head>
 <body>
 
-  <!-- Layar Login -->
+  <!-- Layar Login Pengguna -->
   <div id="login-view" class="container d-flex align-items-center justify-content-center min-vh-100">
     <div class="card p-4 shadow border-0" style="max-width: 380px; width: 100%; border-radius: 1rem;">
       <div class="text-center mb-4">
@@ -128,7 +149,12 @@
         </div>
         <div class="mb-3">
           <label class="form-label small fw-semibold text-secondary">Password</label>
-          <input type="password" id="login-password" class="form-control" required placeholder="masukan pasword disini">
+          <div class="password-wrapper">
+            <input type="password" id="login-password" class="form-control pe-5" required placeholder="masukan pasword disini">
+            <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('login-password', this)">
+              <i class="fa-regular fa-eye"></i>
+            </button>
+          </div>
         </div>
         <button type="submit" id="login-btn" class="btn btn-primary w-100 py-2 fw-semibold" style="background-color: var(--accent-blue); border: none;">
           Masuk Sistem
@@ -184,7 +210,7 @@
         </div>
       </header>
 
-      <!-- Tempat memuat modul HTML dinamis -->
+      <!-- Tempat render komponen modul dinamis -->
       <div id="dynamic-content-container">
         <div class="text-center py-5 text-muted">
           <div class="spinner-border spinner-border-sm text-primary me-2"></div>Memuat modul...
@@ -214,11 +240,21 @@
           <form id="form-ganti-password" onsubmit="submitGantiPassword(event)">
             <div class="mb-2">
               <label class="form-label small fw-semibold">Password Lama</label>
-              <input type="password" id="gp-old" class="form-control form-control-sm" required>
+              <div class="password-wrapper">
+                <input type="password" id="gp-old" class="form-control form-control-sm pe-5" required placeholder="masukan pasword disini">
+                <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('gp-old', this)">
+                  <i class="fa-regular fa-eye"></i>
+                </button>
+              </div>
             </div>
             <div class="mb-3">
               <label class="form-label small fw-semibold">Password Baru (min 6 digit)</label>
-              <input type="password" id="gp-new" class="form-control form-control-sm" minlength="6" required>
+              <div class="password-wrapper">
+                <input type="password" id="gp-new" class="form-control form-control-sm pe-5" minlength="6" required placeholder="masukan pasword disini">
+                <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('gp-new', this)">
+                  <i class="fa-regular fa-eye"></i>
+                </button>
+              </div>
             </div>
             <button type="submit" id="btn-save-gp" class="btn btn-primary btn-sm w-100">Simpan Password Baru</button>
           </form>
@@ -230,19 +266,64 @@
   <!-- Bootstrap JS Bundle -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-  <!-- Script Global & Dynamic Loader -->
+  <!-- Script Global Engine, Cache & Router -->
   <script>
     const API_ENDPOINT = 'https://script.google.com/macros/s/AKfycbxzaCXr0j0-KtMQaWK7tkHseJzjq95MBH-h9DU403jbCGF6D8131-s6zwmpLvgiIjoW/exec';
 
-    async function postGAS(payload) {
+    // 1. MEMORY CACHE AKSELERASI KECEPATAN (TTL: 3 MENIT)
+    const SIMKEL_CACHE = {};
+
+    async function postGAS(payload, useCache = false) {
+      const cacheKey = payload.action + (payload.tanggal ? '_' + payload.tanggal : '') + (payload.student_id ? '_' + payload.student_id : '');
+
+      // Sajikan data instan dari memori jika cache masih valid (< 3 menit)
+      if (useCache && SIMKEL_CACHE[cacheKey] && (Date.now() - SIMKEL_CACHE[cacheKey].timestamp < 180000)) {
+        return SIMKEL_CACHE[cacheKey].data;
+      }
+
       const response = await fetch(API_ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify(payload)
       });
-      return await response.json();
+      const result = await response.json();
+
+      // Simpan respons ke memori cache
+      if (result && result.status === 'success' && useCache) {
+        SIMKEL_CACHE[cacheKey] = {
+          timestamp: Date.now(),
+          data: result
+        };
+      }
+
+      return result;
     }
 
+    // Membersihkan cache ketika ada mutasi/penyimpanan data baru
+    function invalidateCache() {
+      for (const k in SIMKEL_CACHE) {
+        delete SIMKEL_CACHE[k];
+      }
+    }
+
+    // 2. TOGGLE VISIBILITAS PASSWORD (MATA MINIMALIS)
+    function togglePasswordVisibility(inputId, btnEl) {
+      const input = document.getElementById(inputId);
+      const icon = btnEl.querySelector('i');
+      if (!input || !icon) return;
+
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+      } else {
+        input.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+      }
+    }
+
+    // 3. AUTENTIKASI LOGIN
     async function handleLogin(e) {
       e.preventDefault();
       const usernameInput = document.getElementById('login-username').value.trim();
@@ -277,6 +358,7 @@
       }
     }
 
+    // 4. RENDER APP SHELL & PRELOAD DATA CEPAT
     function renderAppShell(sessionData) {
       const loginView = document.getElementById('login-view');
       loginView.classList.remove('d-flex');
@@ -289,9 +371,15 @@
       document.getElementById('role-badge').innerText = 'Role: ' + role;
 
       applyRBACVisibility(role);
+
+      // Preload data dasar di latar belakang agar modul terbuka tanpa jeda
+      postGAS({ action: 'getDataSiswa' }, true).catch(() => {});
+      postGAS({ action: 'getDashboardData' }, true).catch(() => {});
+
       navigateModule('dashboard');
     }
 
+    // 5. ATURAN HAK AKSES PERAN (RBAC) PADA NAVIGASI
     function applyRBACVisibility(role) {
       const isWali = (role === 'WALI_KELAS');
       const isBendahara = (role === 'BENDAHARA' || isWali);
@@ -326,7 +414,7 @@
       if (bnavKas) bnavKas.style.display = isBendahara ? 'block' : 'none';
     }
 
-    // Dynamic Component Loader
+    // 6. DYNAMIC COMPONENT LOADER
     async function navigateModule(name) {
       const allMenus = ['dashboard','siswa','presensi','piket','jurnal','kedisiplinan','kas','akademik','pengumuman','pengajuan','bimbingan','inventaris','pesan'];
       allMenus.forEach(m => {
@@ -362,7 +450,7 @@
         const html = await response.text();
         container.innerHTML = html;
 
-        // Eksekusi script internal komponen
+        // Eksekusi script internal modul
         const scripts = container.querySelectorAll("script");
         scripts.forEach(s => {
           const newScript = document.createElement("script");
@@ -375,6 +463,7 @@
       }
     }
 
+    // 7. GANTI PASSWORD MANDIRI
     function bukaModalGantiPassword() {
       document.getElementById('form-ganti-password').reset();
       new bootstrap.Modal(document.getElementById('modalGantiPassword')).show();
@@ -407,8 +496,10 @@
       }
     }
 
+    // 8. LOGOUT
     function handleLogout() {
       sessionStorage.removeItem('SIMKEL_SESSION');
+      invalidateCache();
       const appView = document.getElementById('app-view');
       const loginView = document.getElementById('login-view');
       appView.style.display = 'none';
@@ -417,6 +508,7 @@
       document.getElementById('login-form').reset();
     }
 
+    // 9. INISIALISASI AUTO-LOGIN
     window.addEventListener('DOMContentLoaded', () => {
       const savedSession = sessionStorage.getItem('SIMKEL_SESSION');
       if (savedSession) {
