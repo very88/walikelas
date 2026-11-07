@@ -10,7 +10,7 @@
         </select>
       </div>
 
-      <!-- Tombol Aksi: Tersembunyi secara default, hanya ditampilkan untuk WALI_KELAS -->
+      <!-- Tombol Aksi: Terbuka untuk WALI_KELAS dan KURIKULUM -->
       <div id="siswa-btn-actions" style="display: none !important;" class="gap-2">
         <button class="btn btn-outline-success btn-sm" onclick="downloadTemplateSiswa()"><i class="fa-solid fa-download me-1"></i> Template Excel</button>
         <button class="btn btn-outline-primary btn-sm" onclick="bukaModalImportSiswa()"><i class="fa-solid fa-file-import me-1"></i> Import Excel</button>
@@ -218,7 +218,7 @@
       </div>
       <div class="modal-body p-3">
         <p class="small text-muted mb-2">
-          Gunakan file template Excel resmi untuk memastikan data identitas dan keluarga terimpor secara presisi ke kelas yang aktif.
+          Gunakan template Excel resmi untuk mengimpor siswa langsung ke kelas yang sedang aktif.
         </p>
         <div class="mb-3">
           <label class="form-label small fw-semibold">Pilih Berkas Excel (.xlsx / .xls)</label>
@@ -272,12 +272,12 @@
   async function loadTabelSiswa() {
     var tbody = document.getElementById('table-siswa-body');
     var session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
-    var isWali = (session.role === 'WALI_KELAS');
+    var isPimpinan = (session.role === 'WALI_KELAS' || session.role === 'KURIKULUM' || session.role === 'ADMIN');
 
-    // Tampilkan tombol aksi hanya untuk Wali Kelas
+    // Tampilkan tombol aksi untuk Wali Kelas dan Kurikulum
     var actionDiv = document.getElementById('siswa-btn-actions');
     if (actionDiv) {
-      if (isWali) {
+      if (isPimpinan) {
         actionDiv.style.removeProperty('display');
         actionDiv.style.display = 'flex';
       } else {
@@ -286,7 +286,8 @@
     }
 
     try {
-      var res = await postGAS({ action: 'getDataSiswa' });
+      var currentClassId = sessionStorage.getItem('SIMKEL_ACTIVE_CLASS_ID') || '';
+      var res = await postGAS({ action: 'getDataSiswa', class_id: currentClassId });
       if (res.status === 'success') {
         dataSiswaList = res.data || [];
         renderSiswa(dataSiswaList);
@@ -302,7 +303,7 @@
     var tbody = document.getElementById('table-siswa-body');
     tbody.innerHTML = '';
     var session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
-    var isWali = (session.role === 'WALI_KELAS');
+    var isPimpinan = (session.role === 'WALI_KELAS' || session.role === 'KURIKULUM' || session.role === 'ADMIN');
 
     if (list.length === 0) {
       tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">Belum ada siswa terdaftar pada kelas ini.</td></tr>';
@@ -326,12 +327,11 @@
           '<td><span class="badge ' + rBadge + '">' + rLabel + '</span></td>' +
           '<td>' + (s.no_hp || '-') + '</td>' +
           '<td class="text-center">' +
-            '<button class="btn btn-sm btn-outline-info py-0 px-2 me-1" onclick="bukaStudent360(\'' + s.student_id + '\')" title="Lihat Profil Lengkap Student 360°">' +
+            '<button class="btn btn-sm btn-outline-info py-0 px-2 me-1" onclick="bukaStudent360(\'' + s.student_id + '\')" title="Lihat Profil Student 360°">' +
               '<i class="fa-solid fa-address-card"></i>' +
             '</button>';
 
-      // HANYA WALI KELAS yang memiliki tombol Pindah Kelas, Reset Password, Edit, Ubah Role, dan Hapus
-      if (isWali) {
+      if (isPimpinan) {
         htmlRow += '' +
           '<button class="btn btn-sm btn-outline-info py-0 px-2 me-1" onclick="bukaModalPindahKelas(\'' + s.student_id + '\', \'' + s.nama_lengkap + '\')" title="Pindahkan ke Kelas Lain">' +
             '<i class="fa-solid fa-arrow-right-arrow-left"></i>' +
@@ -447,13 +447,15 @@
     new bootstrap.Modal(document.getElementById('modalPindahKelas')).show();
 
     var session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
-    var currentClassId = sessionStorage.getItem('SIMKEL_ACTIVE_CLASS_ID');
+    var currentClassId = (sessionStorage.getItem('SIMKEL_ACTIVE_CLASS_ID') || '').toString().trim();
 
     try {
       var res = await postGAS({ action: 'getDaftarKelas', user_id: session.user_id });
       if (res.status === 'success' && res.data) {
         select.innerHTML = '';
-        var kelasLain = res.data.filter(function(k) { return k.class_id !== currentClassId; });
+        var kelasLain = res.data.filter(function(k) { 
+          return (k.class_id || '').toString().trim() !== currentClassId; 
+        });
         
         if (kelasLain.length === 0) {
           select.innerHTML = '<option value="">Tidak ada kelas lain yang tersedia</option>';
@@ -499,7 +501,7 @@
       alert(res.message);
       if (res.status === 'success') {
         bootstrap.Modal.getInstance(document.getElementById('modalPindahKelas')).hide();
-        loadTabelSiswa(); // Muat ulang tabel (siswa otomatis keluar dari tampilan kelas aktif ini)
+        loadTabelSiswa();
       }
     } catch (err) {
       alert('Gagal memproses pemindahan siswa.');
@@ -510,7 +512,7 @@
   }
 
   function filterSiswa() {
-    var q = document.getElementById('cari-siswa').value.toLowerCase();
+    var q = document.getElementById('cari-siswa').value.toLowerCase().trim();
     var g = document.getElementById('filter-jk').value;
     var filtered = dataSiswaList.filter(function(s) {
       var matchQ = (s.nama_lengkap || '').toLowerCase().includes(q) || (s.nis || '').toString().includes(q);
@@ -520,11 +522,11 @@
     renderSiswa(filtered);
   }
 
-  // ================= TAMBAH & EDIT SISWA (KHUSUS WALI KELAS) =================
   function bukaModalTambahSiswa() {
     var session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
-    if (session.role !== 'WALI_KELAS') {
-      alert('Akses Ditolak: Hanya Wali Kelas yang memiliki wewenang menambah data siswa.');
+    var isPimpinan = (session.role === 'WALI_KELAS' || session.role === 'KURIKULUM' || session.role === 'ADMIN');
+    if (!isPimpinan) {
+      alert('Akses Ditolak: Hanya Wali Kelas & Kurikulum yang dapat menambah data siswa.');
       return;
     }
     document.getElementById('form-siswa').reset();
@@ -536,11 +538,12 @@
 
   function bukaModalEditSiswa(studentId) {
     var session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
-    if (session.role !== 'WALI_KELAS') {
-      alert('Akses Ditolak: Hanya Wali Kelas yang dapat mengubah data siswa.');
+    var isPimpinan = (session.role === 'WALI_KELAS' || session.role === 'KURIKULUM' || session.role === 'ADMIN');
+    if (!isPimpinan) {
+      alert('Akses Ditolak: Anda tidak memiliki wewenang mengedit data.');
       return;
     }
-    var s = dataSiswaList.find(function(x) { return x.student_id === studentId; });
+    var s = dataSiswaList.find(function(x) { return (x.student_id || '').toString().trim() === studentId.toString().trim(); });
     if (!s) return;
 
     document.getElementById('form-siswa').reset();
@@ -578,8 +581,9 @@
   async function submitFormSiswa(e) {
     e.preventDefault();
     var session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
-    if (session.role !== 'WALI_KELAS') {
-      alert('Akses Ditolak: Anda tidak memiliki wewenang menyimpan data siswa.');
+    var isPimpinan = (session.role === 'WALI_KELAS' || session.role === 'KURIKULUM' || session.role === 'ADMIN');
+    if (!isPimpinan) {
+      alert('Akses Ditolak: Anda tidak memiliki wewenang menyimpan data.');
       return;
     }
 
@@ -587,6 +591,7 @@
     btn.innerText = 'Menyimpan...';
     btn.disabled = true;
 
+    var currentClassId = sessionStorage.getItem('SIMKEL_ACTIVE_CLASS_ID') || '';
     var payloadData = {
       student_id: document.getElementById('fs-student-id').value,
       nis: document.getElementById('fs-nis').value.trim(),
@@ -606,13 +611,15 @@
       nama_ibu: document.getElementById('fs-ibu').value.trim(),
       pekerjaan_ibu: document.getElementById('fs-pek-ibu').value.trim(),
       no_hp_ortu: document.getElementById('fs-hp-ortu').value.trim(),
-      alamat_ortu: document.getElementById('fs-alamat-ortu').value.trim()
+      alamat_ortu: document.getElementById('fs-alamat-ortu').value.trim(),
+      class_id: currentClassId
     };
 
     try {
       var res = await postGAS({
         action: 'saveSiswa',
         user_id: session.user_id,
+        class_id: currentClassId,
         payload: payloadData
       });
 
@@ -629,13 +636,7 @@
     }
   }
 
-  // ================= DOWNLOAD TEMPLATE EXCEL =================
   function downloadTemplateSiswa() {
-    var session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
-    if (session.role !== 'WALI_KELAS') {
-      alert('Hanya Wali Kelas yang dapat mengunduh template kesiswaan.');
-      return;
-    }
     if (typeof XLSX === 'undefined') {
       alert('Library SheetJS belum siap.');
       return;
@@ -670,13 +671,7 @@
     XLSX.writeFile(workbook, "Template_Import_Siswa_SIMKEL.xlsx");
   }
 
-  // ================= IMPORT EXCEL SISWA =================
   function bukaModalImportSiswa() {
-    var session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
-    if (session.role !== 'WALI_KELAS') {
-      alert('Akses Ditolak: Hanya Wali Kelas yang dapat mengimpor data siswa.');
-      return;
-    }
     document.getElementById('file-import-siswa').value = '';
     new bootstrap.Modal(document.getElementById('modalImportSiswa')).show();
   }
@@ -711,10 +706,12 @@
 
         btn.innerText = 'Mengimpor ' + rows.length + ' Siswa...';
         var session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
+        var currentClassId = sessionStorage.getItem('SIMKEL_ACTIVE_CLASS_ID') || '';
 
         var res = await postGAS({
           action: 'importSiswaBatch',
           user_id: session.user_id,
+          class_id: currentClassId,
           rows: rows
         });
 
@@ -734,7 +731,6 @@
     reader.readAsArrayBuffer(file);
   }
 
-  // ================= RESET PASSWORD SISWA =================
   async function resetPasswordSiswa(studentId, nama, nis) {
     if (!confirm('Reset password untuk siswa ' + nama + ' (NIS: ' + nis + ') menjadi "siswa123"?')) return;
     var session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
@@ -750,7 +746,6 @@
     }
   }
 
-  // ================= JABATAN PENGURUS KELAS =================
   function bukaModalRole(studentId, nama, currentRole) {
     document.getElementById('fr-student-id').value = studentId;
     document.getElementById('fr-nama-siswa').innerText = nama;
@@ -775,7 +770,6 @@
     }
   }
 
-  // ================= HAPUS SISWA =================
   async function hapusSiswa(studentId, nama) {
     if (!confirm('Hapus siswa ' + nama + '?')) return;
     var session = JSON.parse(sessionStorage.getItem('SIMKEL_SESSION') || '{}');
